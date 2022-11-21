@@ -1,0 +1,16 @@
+chatroom_server:
+  url: 'https://speakeasy.ifi.uzh.ch'                                         # URL of server that hosts the chatrooms
+
+conversation_config:
+  listen_freq: 3                                                              # How long to wait after giving a response
+  template_answer: '../setup_data/template_answer.json'                       # Json file with template answers
+  first_funnel_info:
+    classifier_train_data: '../setup_data/first_filter_train_examples.json'
+
+  entity_parser:
+    model_size: 'trf'                                                         # 'sm', 'md', 'lg', 'trf'
+
+  knowledge_graphs:
+    wikidata_kg_filepath: '../setup_data/14_graph.nt'
+    imdb2movinet_filepath: '../setup_data/imdb2movienet.json'
+    crowd_sourcing_kg_filepath: '../setup_data/14_graph.tsv'
