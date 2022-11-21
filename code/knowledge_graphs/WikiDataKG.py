@@ -30,8 +30,8 @@ class WikiDataKG(BasicKG):
 
 if __name__ == '__main__':
     kg = WikiDataKG(
-        kg_tuple_file_path='../../setup_data/14_graph.nt',
-        imdb2movienet_filepath='../../setup_data/imdb2movienet.json'
+        kg_tuple_file_path='../setup_data/14_graph.nt',
+        imdb2movienet_filepath='../setup_data/imdb2movienet.json'
     )
 
     assert 'nm0000770' in kg.imdb2movienet

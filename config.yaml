@@ -3,7 +3,7 @@ chatroom_server:
 
 conversation_config:
   listen_freq: 3                                                              # How long to wait after giving a response
-  template_answer: '../setup_data/template_answer.json'                       # Json file with template answers
+  template_answer: '../setup_data/template_answers.json'                       # Json file with template answers
   first_funnel_info:
     classifier_train_data: '../setup_data/first_filter_train_examples.json'
 

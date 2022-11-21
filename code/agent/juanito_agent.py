@@ -27,9 +27,10 @@ class JuanitoBot(DemoBot):
         self.entityParser = EntityParser(model_type=conversation_params['entity_parser']['model_size'])
         self.wkdata_kg = WikiDataKG(
             kg_tuple_file_path=conversation_params['knowledge_graphs']['wikidata_kg_filepath'],
-            imdb2movienet_filepath=conversation_params['knowledge_graphs']['wikidata_kg_filepath']
+            imdb2movienet_filepath=conversation_params['knowledge_graphs']['imdb2movinet_filepath']
         )
         self._template_answer = json.load(open(conversation_params['template_answer'], 'r'))
+        print('Ready to go!')
 
     def listen(self):
         while True:
@@ -57,12 +58,14 @@ class JuanitoBot(DemoBot):
 
                             # check if the message is new
                             if message['ordinal'] not in self.chat_state[room_id]['messages']:
+
                                 # Add message to list of messages of the agent
                                 self.chat_state[room_id]['messages'][message['ordinal']] = message
 
                                 # Classify the intent or type of interaction requested in the message
                                 intent = self.first_funnel_filter(message['message'])
 
+                                ##### You should call your agent here and get the response message #####
                                 if intent == "Conversation":
                                     response = self._respond_with_conversation()
 
@@ -71,6 +74,7 @@ class JuanitoBot(DemoBot):
 
                                 elif intent == "Media Question":
                                     self._respond_media_request(message['message'], room_id=room_id)
+                                    response = None
 
                                 elif intent == 'Recommendation Questions':
                                     response = self._respond_with_recommendation()
@@ -80,8 +84,8 @@ class JuanitoBot(DemoBot):
                                                " could you please phrase it in simpler terms?"
                                 #print('\t- Chatroom {} - new message #{}: \'{}\' - {}'.format(room_id, message['ordinal'], message['message'], self.get_time()))
 
-                                ##### You should call your agent here and get the response message #####
-                                self.post_message(room_id=room_id, session_token=self.session_token, message=response)
+                                if response:
+                                    self.post_message(room_id=room_id, session_token=self.session_token, message=response)
             time.sleep(listen_freq)
 
     def _respond_with_conversation(self):
@@ -130,13 +134,11 @@ class JuanitoBot(DemoBot):
     def _sample_template_answer(self, interaction_type: str) -> str:
         return random.choice(self._template_answer[interaction_type])
 
+
 if __name__ == '__main__':
     username = 'juandiego.bermeoortiz_bot'
     password = 'V2f80g-vpxEh7w'
     #password = getpass.getpass('Password of the demo bot:')
     bot = JuanitoBot(username, password)
-
-    a = bot._respond_media_request("I want to see a picture of Julia Roberts")
-
     bot.listen()
 
