@@ -16,14 +16,13 @@ def basic_tokenizing_and_cleaning(text: str) -> str:
 
 
 class BasicRegexMatcher:
-    def __init__(self, regex_patterns: Tuple[str, ...], group_to_extract: int):
+    def __init__(self, regex_patterns: Tuple[Tuple[str, int], ...]):
         self.regex_patterns = regex_patterns
-        self.group_to_extract = group_to_extract
 
     def match_string(self, document: str) -> Optional[str]:
-        for pattern in self.regex_patterns:
+        for pattern, group_to_extract in self.regex_patterns:
             if match := re.search(pattern, document, re.IGNORECASE):
-                return basic_tokenizing_and_cleaning(match.group(self.group_to_extract))
+                return basic_tokenizing_and_cleaning(match.group(group_to_extract))
 
         return None
 

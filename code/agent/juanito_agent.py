@@ -64,33 +64,40 @@ class JuanitoBot(DemoBot):
                             # check if the message is new
                             if message['ordinal'] not in self.chat_state[room_id]['messages']:
 
-                                # Add message to list of messages of the agent
-                                self.chat_state[room_id]['messages'][message['ordinal']] = message
+                                try:
+                                    # Add message to list of messages of the agent
+                                    self.chat_state[room_id]['messages'][message['ordinal']] = message
 
-                                # Classify the intent or type of interaction requested in the message
-                                intent = self.first_funnel_filter(message['message'])
+                                    # Classify the intent or type of interaction requested in the message
+                                    intent = self.first_funnel_filter(message['message'])
 
-                                ##### You should call your agent here and get the response message #####
-                                if intent == "Conversation":
-                                    response = self._respond_with_conversation()
+                                    ##### You should call your agent here and get the response message #####
+                                    if intent == "Conversation":
+                                        response = self._respond_with_conversation()
 
-                                elif intent == "Factual Question/Embedding/Crowdsourcing":
-                                    response = self._respond_KG_question()
+                                    elif intent == "Factual Question/Embedding/Crowdsourcing":
+                                        response = self._respond_KG_question()
 
-                                elif intent == "Media Question":
-                                    self._respond_media_request(message['message'], room_id=room_id)
-                                    response = None
+                                    elif intent == "Media Question":
+                                        self._respond_media_request(message['message'], room_id=room_id)
+                                        response = None
 
-                                elif intent == 'Recommendation Questions':
-                                    response = self._respond_with_recommendation()
+                                    elif intent == 'Recommendation Questions':
+                                        response = self._respond_with_recommendation()
 
-                                else:
-                                    response = "Sorry I don't really understand what you mean," \
-                                               " could you please phrase it in simpler terms?"
-                                #print('\t- Chatroom {} - new message #{}: \'{}\' - {}'.format(room_id, message['ordinal'], message['message'], self.get_time()))
+                                    else:
+                                        response = "Sorry I don't really understand what you mean," \
+                                                   " could you please phrase it in simpler terms?"
 
-                                if response:
-                                    self.post_message(room_id=room_id, session_token=self.session_token, message=response)
+                                    if response:
+                                        self.post_message(room_id=room_id, session_token=self.session_token,
+                                                          message=response)
+
+                                except Exception as e:
+                                    print(e)
+                                    self.post_message(room_id=room_id, session_token=self.session_token,
+                                                      message=self._sample_template_answer("failure"))
+
             time.sleep(listen_freq)
 
     def _respond_with_conversation(self):
@@ -135,10 +142,15 @@ class JuanitoBot(DemoBot):
                 if imdb_id is not None:
                     imdb_ids.append(imdb_id)
 
+        # Tell the user the search will take a bit longer
+        self.post_message(room_id=room_id, session_token=self.session_token,
+                          message=self._sample_template_answer('longer wait'))
+
         # If still no imdb ids where found, use regex patterns to extract relevant text and match to a KG entity label
         if len(imdb_ids) == 0:
             extracted_str = self._media_q_regex_matchers.match_string(spacy_proc_doc.text)
-            wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str, ent_type='person')
+            wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str, ent_type='person') \
+                if extracted_str else None
             imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=wk_ent_id) if wk_ent_id else None
             if imdb_id is not None:
                 imdb_ids.append(imdb_id)
