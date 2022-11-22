@@ -7,7 +7,7 @@ from typing import Optional
 from thefuzz import fuzz
 
 from knowledge_graphs.BasicKG import BasicKG
-from knowledge_graphs.wikidata_queries import imdb_query, person_exact_lowercase_label_match, exact_lowercase_label_match
+from knowledge_graphs.wikidata_queries import imdb_query, person_exact_lowercase_label_match, exact_lowercase_label_match, person_or_film_lowercase_label_match, label_query
 
 
 class WikiDataKG(BasicKG):
@@ -15,9 +15,12 @@ class WikiDataKG(BasicKG):
                  kg_tuple_file_path: str,
                  imdb2movienet_filepath: str,
                  entity_label_filepath: Optional[str] = None,
-                 property_label_filepath: Optional[str] = None):
+                 property_label_filepath: Optional[str] = None,
+                 property_extended_label_filepath: Optional[str] = None,
+                 ):
         super().__init__(kg_tuple_file_path, entity_label_filepath, property_label_filepath)
         self.imdb2movienet = json.load(open(imdb2movienet_filepath, 'r'))
+        self._property_extended_label_set = json.load(open(property_extended_label_filepath, 'r'))
 
     def check_if_entity_in_kg(self, wk_ent_id: str) -> bool:
         return ((self.namespaces.WD[wk_ent_id], None, None) in self.kg) or \
@@ -26,6 +29,9 @@ class WikiDataKG(BasicKG):
     def check_if_property_in_kg(self, wk_prop_id: str) -> bool:
         return (None, self.namespaces.WD[wk_prop_id], None) in self.kg
 
+    def get_object_or_objects(self, wk_ent_id: str, wk_prop_id: str) -> list:
+        return [obj for obj in self.kg.objects(self.namespaces.WD.wk_ent_id, self.namespaces.WDT.wk_prop_id)]
+
     def get_imdb_id(self, wk_ent_id: str) -> Optional[str]:
         if self.check_if_entity_in_kg(wk_ent_id):
             query_result = self.kg.query(imdb_query, initBindings={"id": self.namespaces.WD[wk_ent_id]})
@@ -33,6 +39,16 @@ class WikiDataKG(BasicKG):
 
             if len(imdb_ids) >= 1:
                 return imdb_ids[0]
+
+        return None
+
+    def get_entity_label(self, wk_ent_id: str) -> Optional[str]:
+        if self.check_if_entity_in_kg(wk_ent_id):
+            query_result = self.kg.query(label_query, initBindings={"id": self.namespaces.WD[wk_ent_id]})
+            labels = [str(label[0]) for label in query_result]
+
+            if len(labels) >= 1:
+                return labels[0]
 
         return None
 
@@ -48,6 +64,9 @@ class WikiDataKG(BasicKG):
         elif ent_type == 'person':
             query_result = self.kg.query(person_exact_lowercase_label_match.format(entity_string_to_match))
 
+        elif ent_type == 'person or movie':
+            query_result = self.kg.query(person_or_film_lowercase_label_match.format(entity_string_to_match))
+
         detected_wk_entities = [str(wk_ent_id) for wk_ent_id, _ in query_result]
 
         if len(detected_wk_entities) == 1:
@@ -60,9 +79,23 @@ class WikiDataKG(BasicKG):
                  for wk_id, label in self.entity_labels_dict.items()
                  if fuzz.token_sort_ratio(entity_string_to_match, label) > 75],
             )
-            wk_ent_id = matches[matches[:, 1].argmax(), 0]
+
+            if matches.shape[0] > 0:
+                wk_ent_id = matches[matches[:, 1].argmax(), 0]
 
         return wk_ent_id
+
+    def get_wkdata_propid_based_on_label_match(self, property_str: str):
+        # Try matching the entity based on the edit distance
+        matches = np.array(
+            [wk_id for wk_id, label_list in self._property_extended_label_set.items()
+             if any([fuzz.token_sort_ratio(property_str, label) > 75 for label in label_list])],
+        )
+
+        if len(matches) > 0:
+            return matches[matches.argmax()]
+        else:
+            return None
 
     def get_movinet_id(self, imdb_id: str) -> Optional[str]:
         if imdb_id in self.imdb2movienet.keys():

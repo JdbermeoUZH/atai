@@ -11,6 +11,15 @@ SELECT DISTINCT ?imdb WHERE {
 LIMIT 10
 """
 
+label_query = """
+prefix wdt: <http://www.wikidata.org/prop/direct/>
+prefix wd: <http://www.wikidata.org/entity/>
+SELECT DISTINCT ?label WHERE {
+    ?id rdfs:label ?label .
+}
+LIMIT 10
+"""
+
 """
 Match entities by label
 #######################
@@ -65,6 +74,26 @@ WHERE {{
 LIMIT 1
 """
 
+person_or_film_lowercase_label_match = """
+prefix wdt: <http://www.wikidata.org/prop/direct/>
+prefix wd: <http://www.wikidata.org/entity/>
+SELECT ?item ?label 
+WHERE {{
+        ?item rdfs:label ?label .
+        {{ ?item wdt:P31 wd:Q11424}}
+        UNION
+        {{ ?item wdt:P31 wd:Q5}}
+        UNION
+        {{ ?item wdt:P31 wd:Q20650540}}
+        UNION
+        {{ ?item wdt:P279 wd:Q202866}}
+        UNION
+        {{ ?item wdt:P279 wd:Q2431196}}
+        FILTER (LCASE(STR(?label)) = '{}')
+        FILTER(LANG(?label) = "en")
+}}
+LIMIT 1
+"""
 
 """
 Match properties by label

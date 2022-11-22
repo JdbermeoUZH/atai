@@ -8,8 +8,9 @@ from knowledge_graphs.WikiDataKG import WikiDataKG
 from models.EntityParser import EntityParser
 from models.InteractionTypeClassifier import InteractionTypeClassifier
 from demo_agent import DemoBot
-from utils.utils import get_args_config_file
 from regex_matchers.MediaQRegexMatcher import MediaQRegexMatcher
+from regex_matchers.FactQRegexMatcher import FactQRegexMatcher
+from utils.utils import get_args_config_file
 
 # Load configurations
 config_args = get_args_config_file(os.path.join('..', 'config.yaml'))
@@ -34,7 +35,8 @@ class JuanitoBot(DemoBot):
             property_label_filepath=wk_kg_params['property_labels_dict']
         )
         self._template_answer = json.load(open(conversation_params['template_answer'], 'r'))
-        self._media_q_regex_matchers = MediaQRegexMatcher()
+        self._media_q_regex_matcher = MediaQRegexMatcher()
+        self._fact_q_regex_matcher = FactQRegexMatcher()
         print('Ready to go!')
 
     def listen(self):
@@ -104,35 +106,55 @@ class JuanitoBot(DemoBot):
         print("Use conversational model")
         return "Use conversational model"
 
-    def _respond_KG_question(self, message: str, room_id: str):
-        wk_ent_id = None
-        wk_pred_id = None
-        # TODO: Use regex pattern to match predicate and entity
+    def _respond_kg_question(self, message: str, room_id: str):
+        answers = []
+        # Use regex pattern to match predicate and entity (works for simple patterns)
+        entity_str, property_str = self._fact_q_regex_matcher.match_string(message)
+        wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(entity_str, ent_type='person or movie')
+        wk_prop_id = self.wkdata_kg.get_wkdata_propid_based_on_label_match(property_str)
 
-        # If it fails, try to identify with property and entities with pretrained entity linkers
+        if wk_prop_id is None:
+            # TODO: Use spacy's PhraseMatchers to detect properties
+            print('Use phrasematcher on entire string to detect properties')
 
-        # If it fails, ask for rephrasing of the question
+        elif wk_ent_id is None:
+            # TODO: Use spacy entity linkers to identify entities
+            print('Use spacy entity linkers to identify entities')
 
-        # Query the graph for an answer
+        if wk_ent_id and wk_prop_id:
+            # Get the object of the relation (wk_ent_id, wk_prop_id, object)
+            answers = self.wkdata_kg.get_object_or_objects(wk_ent_id=wk_ent_id, wk_prop_id=wk_prop_id)
 
-        # If the no answer is found, answer it with embeddings
-        self._respond_KG_question_using_embeddings(message=message, room_id=room_id,
-                                                   entity_id=wk_ent_id, predicate_id=wk_pred_id)
+        else:
+            # If it fails, ask for rephrasing of the question
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message=self._sample_template_answer('fact question'))
 
-        # If more than one answer is found, answer it with crowd source data
-        self._respond_KG_question_using_crowd_kg(message=message, room_id=room_id, entity_id=wk_ent_id,
-                                                 predicate_id=wk_pred_id)
+        # TODO: If the entity and property were identified but there is no object for it, answer it with embeddings
+        if len(answers) == 0:
+            print('use embeddings')
+            self._respond_KG_question_using_embeddings(message=message, room_id=room_id,
+                                                       entity_id=wk_ent_id, property_id=wk_prop_id)
+
+        # If there is a single object, we can query the objects label and answer the question
+        if len(answers) == 1:
+            self.wkdata_kg.get_entity_label(answers[0])
+
+        if len(answers) > 1:
+            # If more than one answer is found, answer it with crowd source data
+            self._respond_KG_question_using_crowd_kg(message=message, room_id=room_id, entity_id=wk_ent_id,
+                                                     property_id=wk_prop_id)
 
         # If still no answer is found, pull data from the entity and use a QA model
         print("Answer question using the KGs available")
         return "Answer question using the KGs available"
 
-    def _respond_KG_question_using_embeddings(self, message: str, room_id: str, entity_id: str, predicate_id: str):
+    def _respond_KG_question_using_embeddings(self, message: str, room_id: str, entity_id: str, property_id: str):
         response = "Use emebddings"
         print(response)
         return response
 
-    def _respond_KG_question_using_crowd_kg(self, message: str, room_id: str, entity_id: str, predicate_id: str):
+    def _respond_KG_question_using_crowd_kg(self, message: str, room_id: str, entity_id: str, property_id: str):
         response = "Use crowd kg"
         print(response)
         return response
@@ -166,7 +188,7 @@ class JuanitoBot(DemoBot):
 
         # If still no imdb ids where found, use regex patterns to extract relevant text and match to a KG entity label
         if len(imdb_ids) == 0:
-            extracted_str = self._media_q_regex_matchers.match_string(spacy_proc_doc.text)
+            extracted_str = self._media_q_regex_matcher.match_string(spacy_proc_doc.text)
             wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str, ent_type='person') \
                 if extracted_str else None
             imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=wk_ent_id) if wk_ent_id else None

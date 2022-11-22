@@ -67,3 +67,6 @@ class BasicKG:
             p.toPython(): self.kg.value(p, self.namespaces.RDFS.label).toPython() for _, p, _ in tqdm(self.kg)
             if (isinstance(p, rdflib.URIRef) and self.kg.value(p, self.namespaces.RDFS.label))
         }
+
+    def get_object_or_objects(self, wk_ent_id: str, wk_prop_id: str) -> list:
+        return [obj for obj in self.kg.objects(rdflib.URIRef(wk_ent_id), rdflib.URIRef(wk_prop_id))]
