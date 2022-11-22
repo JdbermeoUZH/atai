@@ -100,21 +100,39 @@ class JuanitoBot(DemoBot):
 
             time.sleep(listen_freq)
 
-    def _respond_with_conversation(self):
+    def _respond_with_conversation(self, message: str, room_id: str):
         print("Use conversational model")
         return "Use conversational model"
 
-    def _respond_KG_question(self):
-        # TODO:
+    def _respond_KG_question(self, message: str, room_id: str):
+        wk_ent_id = None
+        wk_pred_id = None
+        # TODO: Use regex pattern to match predicate and entity
+
+        # If it fails, try to identify with property and entities with pretrained entity linkers
+
+        # If it fails, ask for rephrasing of the question
+
+        # Query the graph for an answer
+
+        # If the no answer is found, answer it with embeddings
+        self._respond_KG_question_using_embeddings(message=message, room_id=room_id,
+                                                   entity_id=wk_ent_id, predicate_id=wk_pred_id)
+
+        # If more than one answer is found, answer it with crowd source data
+        self._respond_KG_question_using_crowd_kg(message=message, room_id=room_id, entity_id=wk_ent_id,
+                                                 predicate_id=wk_pred_id)
+
+        # If still no answer is found, pull data from the entity and use a QA model
         print("Answer question using the KGs available")
         return "Answer question using the KGs available"
 
-    def _respond_KG_question_using_embeddings(self):
+    def _respond_KG_question_using_embeddings(self, message: str, room_id: str, entity_id: str, predicate_id: str):
         response = "Use emebddings"
         print(response)
         return response
 
-    def _respond_KG_question_using_crowd_kg(self):
+    def _respond_KG_question_using_crowd_kg(self, message: str, room_id: str, entity_id: str, predicate_id: str):
         response = "Use crowd kg"
         print(response)
         return response

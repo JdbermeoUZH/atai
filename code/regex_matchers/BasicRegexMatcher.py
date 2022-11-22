@@ -29,5 +29,5 @@ class BasicRegexMatcher:
     def test(self, documents: Tuple[str, ...]):
         for document in documents:
             matched_string = self.match_string(document)
-            print(matched_string)
+            print(document, matched_string)
             assert matched_string != ''
