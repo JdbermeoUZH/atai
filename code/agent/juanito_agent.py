@@ -98,8 +98,19 @@ class JuanitoBot(DemoBot):
         return "Use conversational model"
 
     def _respond_KG_question(self):
+        # TODO:
         print("Answer question using the KGs available")
         return "Answer question using the KGs available"
+
+    def _respond_KG_question_using_embeddings(self):
+        response = "Use emebddings"
+        print(response)
+        return response
+
+    def _respond_KG_question_using_crowd_kg(self):
+        response = "Use crowd kg"
+        print(response)
+        return response
 
     def _respond_media_request(self, message: str, room_id: str):
         # Use entity linker to find named entities of interest and their respective wikidata ids
@@ -109,8 +120,8 @@ class JuanitoBot(DemoBot):
         # Try to get imdb_id of PERSON entities successfully linked to wikidata
         imdb_ids = []
         if len(list(wkdata_ents.keys())) > 0:
-            for ent_wk_id in wkdata_ents.keys():
-                imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=ent_wk_id)
+            for wk_ent_id in wkdata_ents.keys():
+                imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=wk_ent_id)
                 if imdb_id:
                     # add imdb_id to the list
                     imdb_ids.append(imdb_id)
@@ -120,34 +131,37 @@ class JuanitoBot(DemoBot):
             for ent in spacy_ents:
                 # Try to match a wk_ent id
                 wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text, ent_type='person')
-                imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=ent_wk_id) if wk_ent_id else None
+                imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=wk_ent_id) if wk_ent_id else None
                 if imdb_id is not None:
                     imdb_ids.append(imdb_id)
 
+        # If still no imdb ids where found, use regex patterns to extract relevant text and match to a KG entity label
         if len(imdb_ids) == 0:
             extracted_str = self._media_q_regex_matchers.match_string(spacy_proc_doc.text)
             wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str, ent_type='person')
-            imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=ent_wk_id) if wk_ent_id else None
+            imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=wk_ent_id) if wk_ent_id else None
             if imdb_id is not None:
                 imdb_ids.append(imdb_id)
 
-        # Display images of movienet_ids found
-        movienet_ids = [self.wkdata_kg.get_movinet_id(imdb_id) for imdb_id in imdb_ids
-                        if self.wkdata_kg.get_movinet_id(imdb_id) is not None]
-
-        if len(movienet_ids) == 1:
-            self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_ids[0]}')
-
-        elif len(movienet_ids) > 1:
-            self.post_message(room_id=room_id, session_token=self.session_token,
-                              message='I found these photos of the people you mentioned ')
-            for movienet_id in movienet_ids:
-                self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_id}')
-
+        if len(imdb_ids) > 0:
+            self._display_imdb_ids(imdb_ids, room_id)
         else:
             # If it was not possible to find an image, sample an error message of type media request
             self.post_message(room_id=room_id, session_token=self.session_token,
                               message=self._sample_template_answer('media_question'))
+
+    def _display_imdb_ids(self, imdb_ids: list, room_id: str) -> None:
+        # Display images of movienet_ids found
+        movienet_ids = [self.wkdata_kg.get_movinet_id(imdb_id) for imdb_id in imdb_ids
+                        if self.wkdata_kg.get_movinet_id(imdb_id) is not None]
+        if len(movienet_ids) == 1:
+            self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_ids[0]}')
+
+        else:
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message='I found these photos of the people you mentioned ')
+            for movienet_id in movienet_ids:
+                self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_id}')
 
     def _respond_with_recommendation(self):
         print("Recommend a collection of movies using the KG")
@@ -162,6 +176,6 @@ if __name__ == '__main__':
     password = 'V2f80g-vpxEh7w'
     #password = getpass.getpass('Password of the demo bot:')
     bot = JuanitoBot(username, password)
-    bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
+    #bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
     bot.listen()
 
