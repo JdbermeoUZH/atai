@@ -1,5 +1,8 @@
+import json
 import os
-from typing import Tuple, Any
+import re
+from tqdm import tqdm
+from typing import Tuple, Any, Optional
 
 import rdflib
 
@@ -23,10 +26,24 @@ def parse_kg_graph(kg_tuple_file_path: str):
     return graph
 
 
+def _load_entity_or_property_labels_from_json(filepath: str):
+    return json.load(open(filepath, 'r'))
+
+
 class BasicKG:
-    def __init__(self, kg_tuple_file_path: str):
+    def __init__(self,
+                 kg_tuple_file_path: str,
+                 entity_label_filepath: Optional[str] = None,
+                 property_label_filepath: Optional[str] = None):
         self.kg = parse_kg_graph(kg_tuple_file_path)
+        print("KG loaded")
         self.namespaces = Namespaces()
+        self.entity_labels_dict = self._extract_entity_labels_dict() if entity_label_filepath is None \
+            else _load_entity_or_property_labels_from_json(entity_label_filepath)
+        print("Entity labels processed")
+        self.property_labels_dict = self._extract_property_labels_dict() if property_label_filepath is None \
+            else _load_entity_or_property_labels_from_json(property_label_filepath)
+        print("Property labels processed")
 
     def check_if_triple_in_kg(self, triple: Tuple[Any, Any, Any]) -> bool:
         return triple in self.kg
@@ -38,10 +55,15 @@ class BasicKG:
     def check_if_property_in_kg(self, prop_uri_str: str) -> bool:
         return (None, rdflib.URIRef(prop_uri_str), None) in self.kg
 
+    def _extract_entity_labels_dict(self) -> dict:
+        return {
+            node.toPython(): self.kg.value(node, self.namespaces.RDFS.label).toPython()
+            for node in tqdm(self.kg.all_nodes())
+            if (isinstance(node, rdflib.URIRef) and self.kg.value(node, self.namespaces.RDFS.label))
+        }
 
-
-
-
-
-
-
+    def _extract_property_labels_dict(self) -> dict:
+        return {
+            p.toPython(): self.kg.value(p, self.namespaces.RDFS.label).toPython() for _, p, _ in tqdm(self.kg)
+            if (isinstance(p, rdflib.URIRef) and self.kg.value(p, self.namespaces.RDFS.label))
+        }

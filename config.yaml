@@ -11,6 +11,11 @@ conversation_config:
     model_size: 'trf'                                                         # 'sm', 'md', 'lg', 'trf'
 
   knowledge_graphs:
-    wikidata_kg_filepath: '../setup_data/14_graph.nt'
-    imdb2movinet_filepath: '../setup_data/imdb2movienet.json'
-    crowd_sourcing_kg_filepath: '../setup_data/14_graph.tsv'
+    wikidata:
+      kg_filepath: '../setup_data/14_graph.nt'
+      imdb2movinet_filepath: '../setup_data/imdb2movienet.json'
+      entity_labels_dict: '../setup_data/wkdata_entity_labels_dict.json'
+      property_labels_dict: '../setup_data/wkdata_property_labels_dict.json'
+
+    crowd_sourcing:
+      kg_filepath: '../setup_data/14_graph.tsv'

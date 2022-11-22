@@ -1,18 +1,20 @@
 import os
+import re
 import time
 import json
 import random
-import getpass
 
 from knowledge_graphs.WikiDataKG import WikiDataKG
 from models.EntityParser import EntityParser
 from models.InteractionTypeClassifier import InteractionTypeClassifier
 from demo_agent import DemoBot
 from utils.utils import get_args_config_file
+from regex_matchers.MediaQRegexMatcher import MediaQRegexMatcher
 
 # Load configurations
 config_args = get_args_config_file(os.path.join('..', 'config.yaml'))
 conversation_params = config_args['conversation_config']
+wk_kg_params = conversation_params['knowledge_graphs']['wikidata']
 first_funnel_config = conversation_params['first_funnel_info']
 
 url = config_args['chatroom_server']['url']  # url of the speakeasy server
@@ -26,10 +28,13 @@ class JuanitoBot(DemoBot):
             train_examples_path=first_funnel_config['classifier_train_data'])
         self.entityParser = EntityParser(model_type=conversation_params['entity_parser']['model_size'])
         self.wkdata_kg = WikiDataKG(
-            kg_tuple_file_path=conversation_params['knowledge_graphs']['wikidata_kg_filepath'],
-            imdb2movienet_filepath=conversation_params['knowledge_graphs']['imdb2movinet_filepath']
+            kg_tuple_file_path=wk_kg_params['kg_filepath'],
+            imdb2movienet_filepath=wk_kg_params['imdb2movinet_filepath'],
+            entity_label_filepath=wk_kg_params['entity_labels_dict'],
+            property_label_filepath=wk_kg_params['property_labels_dict']
         )
         self._template_answer = json.load(open(conversation_params['template_answer'], 'r'))
+        self._media_q_regex_matchers = MediaQRegexMatcher()
         print('Ready to go!')
 
     def listen(self):
@@ -97,33 +102,50 @@ class JuanitoBot(DemoBot):
         return "Answer question using the KGs available"
 
     def _respond_media_request(self, message: str, room_id: str):
-        ent_imdb_id = None
-        movienet_id = None
         # Use entity linker to find named entities of interest and their respective wikidata ids
         spacy_proc_doc, spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities(
-            message, entities_of_interest=('PERSON', 'WORK_OF_ART'))
+            message, entities_of_interest=('PERSON',))
 
-        # If one entity is returned with a wikidata ID, then pull it's IMDB id
-        if len(wkdata_ents) == 1:
-            # Check the detected entity is in fact contained in the graph
-            ent_wk_id = list(wkdata_ents.keys())[0]
-            if self.wkdata_kg.check_if_entity_in_kg(wk_ent_id=ent_wk_id):
-                # Get IMDB ID of the entity
-                ent_imdb_id = self.wkdata_kg.get_imdb_id(ent_wk_id)
+        # Try to get imdb_id of PERSON entities successfully linked to wikidata
+        imdb_ids = []
+        if len(list(wkdata_ents.keys())) > 0:
+            for ent_wk_id in wkdata_ents.keys():
+                imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=ent_wk_id)
+                if imdb_id:
+                    # add imdb_id to the list
+                    imdb_ids.append(imdb_id)
 
-        # If no entities where linked to wikidata, then compare entities detected to all nodes in KG. Pick one with high enough similarity
+        # If no entities where linked to wikidata or no imdb_ids were found, then try to match named entities detected
+        if len(imdb_ids) == 0 and len(spacy_ents) >= 1:
+            for ent in spacy_ents:
+                # Try to match a wk_ent id
+                wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text, ent_type='person')
+                imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=ent_wk_id) if wk_ent_id else None
+                if imdb_id is not None:
+                    imdb_ids.append(imdb_id)
 
-        # If not one a single one matched, then try matching a known regex pattern and rerun the search
+        if len(imdb_ids) == 0:
+            extracted_str = self._media_q_regex_matchers.match_string(spacy_proc_doc.text)
+            wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str, ent_type='person')
+            imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=ent_wk_id) if wk_ent_id else None
+            if imdb_id is not None:
+                imdb_ids.append(imdb_id)
 
-        # If it fails, sample an error message of media request
+        # Display images of movienet_ids found
+        movienet_ids = [self.wkdata_kg.get_movinet_id(imdb_id) for imdb_id in imdb_ids
+                        if self.wkdata_kg.get_movinet_id(imdb_id) is not None]
 
-        if ent_imdb_id:
-            # Map the IMDB id to Movinet's ID
-            movienet_id = self.wkdata_kg.get_movinet_id(ent_imdb_id)
+        if len(movienet_ids) == 1:
+            self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_ids[0]}')
 
-        if movienet_id:
-            self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_id}')
+        elif len(movienet_ids) > 1:
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message='I found these photos of the people you mentioned ')
+            for movienet_id in movienet_ids:
+                self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_id}')
+
         else:
+            # If it was not possible to find an image, sample an error message of type media request
             self.post_message(room_id=room_id, session_token=self.session_token,
                               message=self._sample_template_answer('media_question'))
 
@@ -140,5 +162,6 @@ if __name__ == '__main__':
     password = 'V2f80g-vpxEh7w'
     #password = getpass.getpass('Password of the demo bot:')
     bot = JuanitoBot(username, password)
+    bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
     bot.listen()
 
