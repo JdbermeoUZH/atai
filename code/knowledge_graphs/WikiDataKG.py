@@ -20,7 +20,8 @@ class WikiDataKG(BasicKG):
                  ):
         super().__init__(kg_tuple_file_path, entity_label_filepath, property_label_filepath)
         self.imdb2movienet = json.load(open(imdb2movienet_filepath, 'r'))
-        self._property_extended_label_set = json.load(open(property_extended_label_filepath, 'r'))
+        self._property_extended_label_set = json.load(open(property_extended_label_filepath, 'r')) \
+            if property_extended_label_filepath else None
 
     def check_if_entity_in_kg(self, wk_ent_id: str) -> bool:
         return ((self.namespaces.WD[wk_ent_id], None, None) in self.kg) or \
@@ -52,7 +53,8 @@ class WikiDataKG(BasicKG):
 
         return None
 
-    def get_wkdata_entid_based_on_label_match(self, entity_string_to_match: str, ent_type: Optional[str] = None) -> str:
+    def get_wkdata_entid_based_on_label_match(self, entity_string_to_match: str, ent_type: Optional[str] = None) \
+            -> Optional[str]:
         wk_ent_id = None
         query_result = []
         entity_string_to_match = entity_string_to_match.lower()
@@ -85,7 +87,7 @@ class WikiDataKG(BasicKG):
 
         return wk_ent_id
 
-    def get_wkdata_propid_based_on_label_match(self, property_str: str):
+    def get_wkdata_propid_based_on_label_match(self, property_str: str) -> Optional[str]:
         # Try matching the entity based on the edit distance
         matches = np.array(
             [wk_id for wk_id, label_list in self._property_extended_label_set.items()

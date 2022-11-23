@@ -74,8 +74,8 @@ class FactQRegexMatcher(BasicRegexMatcher):
     def match_string(self, document: str) -> Optional[Tuple[str, str]]:
         for pattern, group_to_extract_property, group_to_extract_entity in self.regex_patterns:
             if match := re.search(pattern, document, re.IGNORECASE):
-                matched_entity = basic_tokenizing_and_cleaning(match.group(group_to_extract_property))
-                matched_property = basic_tokenizing_and_cleaning(match.group(group_to_extract_entity))
+                matched_property = basic_tokenizing_and_cleaning(match.group(group_to_extract_property))
+                matched_entity = basic_tokenizing_and_cleaning(match.group(group_to_extract_entity))
 
                 if matched_entity and matched_property:
                     if matched_entity.strip() != '' and matched_property.strip() != '':

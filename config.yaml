@@ -9,6 +9,7 @@ conversation_config:
 
   entity_parser:
     model_size: 'trf'                                                         # 'sm', 'md', 'lg', 'trf'
+    wkprop_labels_filepath: '../setup_data/wk_data_names_props_of_interest.json'
 
   knowledge_graphs:
     wikidata:

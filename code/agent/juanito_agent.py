@@ -5,7 +5,7 @@ import json
 import random
 
 from knowledge_graphs.WikiDataKG import WikiDataKG
-from models.EntityParser import EntityParser
+from models.EntityPropertyParser import EntityPropertyParser
 from models.InteractionTypeClassifier import InteractionTypeClassifier
 from demo_agent import DemoBot
 from regex_matchers.MediaQRegexMatcher import MediaQRegexMatcher
@@ -27,7 +27,9 @@ class JuanitoBot(DemoBot):
         super().__init__(username, password)
         self.first_funnel_filter = InteractionTypeClassifier(
             train_examples_path=first_funnel_config['classifier_train_data'])
-        self.entityParser = EntityParser(model_type=conversation_params['entity_parser']['model_size'])
+        self.entityParser = EntityPropertyParser(
+            property_extended_label_filepath=conversation_params['entity_parser']['wkprop_labels_filepath'],
+            model_type=conversation_params['entity_parser']['model_size'])
         self.wkdata_kg = WikiDataKG(
             kg_tuple_file_path=wk_kg_params['kg_filepath'],
             imdb2movienet_filepath=wk_kg_params['imdb2movinet_filepath'],
@@ -108,27 +110,55 @@ class JuanitoBot(DemoBot):
 
     def _respond_kg_question(self, message: str, room_id: str):
         answers = []
+        wk_ent_id = None
+        wk_prop_id = None
+
+        # Use phrasematcher on entire string to detect properties
+        wk_prop_ids = self.entityParser.return_wikidata_properties(doc=message)
+        if len(wk_prop_ids) == 1:
+            wk_prop_id = wk_prop_ids[0]
+        elif len(wk_prop_ids) > 1:
+            print("prompt user to ask about a single thing at a time")
+
+        # Use spacy entity linkers to identify entities
+        _, spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities(
+            doc=message, entities_of_interest=("PERSON", "WORK_OF_ART"))
+        wkdata_ents = list(wkdata_ents.keys())
+
+        # If no entities were detected, then try to identify them via named entities detected
+        if len(wkdata_ents) == 0 and len(spacy_ents) > 0:
+            wkdata_ents = []
+            for ent in spacy_ents:
+                # Try to match a wk_ent id
+                wkdata_ents.append(
+                    self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text, ent_type='person'))
+
+        if len(wkdata_ents) == 1:
+            wk_ent_id = wkdata_ents[0]
+
+        elif len(wkdata_ents) > 1:
+            print("prompt user to ask/mention only a single thing entity at a time")
+
         # Use regex pattern to match predicate and entity (works for simple patterns)
-        entity_str, property_str = self._fact_q_regex_matcher.match_string(message)
-        wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(entity_str, ent_type='person or movie')
-        wk_prop_id = self.wkdata_kg.get_wkdata_propid_based_on_label_match(property_str)
+        if wk_prop_id is None or wk_ent_id is None:
+            entity_str, property_str = self._fact_q_regex_matcher.match_string(message)
 
-        if wk_prop_id is None:
-            # TODO: Use spacy's PhraseMatchers to detect properties
-            print('Use phrasematcher on entire string to detect properties')
+            if wk_prop_id is None:
+                wk_prop_id = self.wkdata_kg.get_wkdata_propid_based_on_label_match(property_str)
 
-        elif wk_ent_id is None:
-            # TODO: Use spacy entity linkers to identify entities
-            print('Use spacy entity linkers to identify entities')
+            if wk_ent_id is None:
+                wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(entity_str, ent_type='person or movie')
 
         if wk_ent_id and wk_prop_id:
             # Get the object of the relation (wk_ent_id, wk_prop_id, object)
-            answers = self.wkdata_kg.get_object_or_objects(wk_ent_id=wk_ent_id, wk_prop_id=wk_prop_id)
+            answers = [os.path.basename(str(tuple_)) for tuple_ in self.wkdata_kg.kg.objects(
+                self.wkdata_kg.namespaces.WD[wk_ent_id], self.wkdata_kg.namespaces.WDT[wk_prop_id])]
 
         else:
             # If it fails, ask for rephrasing of the question
             self.post_message(room_id=room_id, session_token=self.session_token,
-                              message=self._sample_template_answer('fact question'))
+                              message=self._sample_template_answer('error_fact_question'))
+            return
 
         # TODO: If the entity and property were identified but there is no object for it, answer it with embeddings
         if len(answers) == 0:
@@ -137,17 +167,20 @@ class JuanitoBot(DemoBot):
                                                        entity_id=wk_ent_id, property_id=wk_prop_id)
 
         # If there is a single object, we can query the objects label and answer the question
-        if len(answers) == 1:
-            self.wkdata_kg.get_entity_label(answers[0])
+        elif len(answers) == 1:
+            entity_label = self.wkdata_kg.get_entity_label(wk_ent_id)
+            property_label = self.wkdata_kg.get_entity_label(wk_prop_id)
+            answer_label = self.wkdata_kg.get_entity_label(answers[0])
 
-        if len(answers) > 1:
+            self.post_message(
+                room_id=room_id, session_token=self.session_token,
+                message=self._sample_template_answer('fact_question').format(
+                    property=property_label, subject=entity_label, object=answer_label))
+
+        elif len(answers) > 1:
             # If more than one answer is found, answer it with crowd source data
             self._respond_KG_question_using_crowd_kg(message=message, room_id=room_id, entity_id=wk_ent_id,
                                                      property_id=wk_prop_id)
-
-        # If still no answer is found, pull data from the entity and use a QA model
-        print("Answer question using the KGs available")
-        return "Answer question using the KGs available"
 
     def _respond_KG_question_using_embeddings(self, message: str, room_id: str, entity_id: str, property_id: str):
         response = "Use emebddings"
@@ -200,7 +233,7 @@ class JuanitoBot(DemoBot):
         else:
             # If it was not possible to find an image, sample an error message of type media request
             self.post_message(room_id=room_id, session_token=self.session_token,
-                              message=self._sample_template_answer('media_question'))
+                              message=self._sample_template_answer('error_media_question'))
 
     def _display_imdb_ids(self, imdb_ids: list, room_id: str) -> None:
         # Display images of movienet_ids found
@@ -228,6 +261,8 @@ if __name__ == '__main__':
     password = 'V2f80g-vpxEh7w'
     #password = getpass.getpass('Password of the demo bot:')
     bot = JuanitoBot(username, password)
-    #bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
+    bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
+    bot._respond_kg_question("Who directed the godfather", 'roomid')
+    bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
     bot.listen()
 
