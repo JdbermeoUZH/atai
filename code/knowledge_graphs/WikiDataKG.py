@@ -7,6 +7,7 @@ from typing import Optional
 from thefuzz import fuzz
 
 from knowledge_graphs.BasicKG import BasicKG
+from knowledge_graphs.WikDataEmbeddings import WikiDataEmbeddings
 from knowledge_graphs.wikidata_queries import imdb_query, person_exact_lowercase_label_match, exact_lowercase_label_match, person_or_film_lowercase_label_match, label_query
 
 
@@ -17,18 +18,28 @@ class WikiDataKG(BasicKG):
                  entity_label_filepath: Optional[str] = None,
                  property_label_filepath: Optional[str] = None,
                  property_extended_label_filepath: Optional[str] = None,
+                 entity_emb_filepath: str = None,
+                 entity_id_mapping: str = None,
+                 relation_emb: str = None,
+                 relation_id_mapping: str = None
                  ):
         super().__init__(kg_tuple_file_path, entity_label_filepath, property_label_filepath)
         self.imdb2movienet = json.load(open(imdb2movienet_filepath, 'r'))
         self._property_extended_label_set = json.load(open(property_extended_label_filepath, 'r')) \
             if property_extended_label_filepath else None
 
+        self.kg_embeddings = WikiDataEmbeddings(
+            entity_emb_filepath=entity_emb_filepath,
+            entity_id_mapping=entity_id_mapping,
+            relation_emb=relation_emb,
+            relation_id_mapping=relation_id_mapping
+        ) if entity_emb_filepath and entity_id_mapping and relation_emb and relation_id_mapping else None
+
     def check_if_entity_in_kg(self, wk_ent_id: str) -> bool:
-        return ((self.namespaces.WD[wk_ent_id], None, None) in self.kg) or \
-               ((None, None, self.namespaces.WD[wk_ent_id]) in self.kg)
+        return str(self.namespaces.WDT[wk_ent_id]) in self.entity_labels_dict.keys()
 
     def check_if_property_in_kg(self, wk_prop_id: str) -> bool:
-        return (None, self.namespaces.WD[wk_prop_id], None) in self.kg
+        return str(self.namespaces.WDT[wk_prop_id]) in self.property_labels_dict.keys()
 
     def get_object_or_objects(self, wk_ent_id: str, wk_prop_id: str) -> list:
         return [obj for obj in self.kg.objects(self.namespaces.WD.wk_ent_id, self.namespaces.WDT.wk_prop_id)]
@@ -45,18 +56,13 @@ class WikiDataKG(BasicKG):
 
     def get_entity_label(self, wk_ent_id: str) -> Optional[str]:
         if self.check_if_entity_in_kg(wk_ent_id):
-            query_result = self.kg.query(label_query, initBindings={"id": self.namespaces.WD[wk_ent_id]})
-            labels = [str(label[0]) for label in query_result]
-
-            if len(labels) >= 1:
-                return labels[0]
+            return self.entity_labels_dict[str(self.namespaces.WD[wk_ent_id])]
 
         return None
 
     def get_property_label(self, wk_prop_id: str) -> Optional[str]:
-
-        if wk_prop_id in self._property_extended_label_set.keys():
-            return self._property_extended_label_set[wk_prop_id][0]
+        if self.check_if_property_in_kg(wk_prop_id):
+            return self.property_labels_dict[str(self.namespaces.WDT[wk_prop_id])]
 
         return None
 
@@ -115,10 +121,15 @@ class WikiDataKG(BasicKG):
 
 if __name__ == '__main__':
     kg = WikiDataKG(
-        kg_tuple_file_path='../setup_data/14_graph.nt',
-        imdb2movienet_filepath='../setup_data/imdb2movienet.json',
-        entity_label_filepath='../setup_data/wkdata_entity_labels_dict.json',
-        property_label_filepath='../setup_data/wkdata_property_labels_dict.json'
+        kg_tuple_file_path='../setup_data/wikidata_kg/14_graph.nt',
+        imdb2movienet_filepath='../setup_data/wikidata_kg/imdb2movienet.json',
+        entity_label_filepath='../setup_data/wikidata_kg/wkdata_entity_labels_dict.json',
+        property_label_filepath='../setup_data/wikidata_kg/wkdata_property_labels_dict.json',
+        property_extended_label_filepath='../setup_data/wikidata_kg/wk_data_names_props_of_interest.json',
+        entity_emb_filepath='../setup_data/wikidata_kg/embeddings/entity_embeds.npy',
+        entity_id_mapping='../setup_data/wikidata_kg/embeddings/entity_ids.del',
+        relation_emb='../setup_data/wikidata_kg/embeddings/relation_embeds.npy',
+        relation_id_mapping='../setup_data/wikidata_kg/embeddings/relation_ids.del'
     )
 
     assert kg.get_imdb_id(wk_ent_id='Q40523') == 'nm0000210'

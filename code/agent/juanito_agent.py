@@ -30,12 +30,17 @@ class JuanitoBot(DemoBot):
         self.entityParser = EntityPropertyParser(
             property_extended_label_filepath=conversation_params['entity_parser']['wkprop_labels_filepath'],
             model_type=conversation_params['entity_parser']['model_size'])
+
         self.wkdata_kg = WikiDataKG(
             kg_tuple_file_path=wk_kg_params['kg_filepath'],
             imdb2movienet_filepath=wk_kg_params['imdb2movinet_filepath'],
             entity_label_filepath=wk_kg_params['entity_labels_dict'],
             property_label_filepath=wk_kg_params['property_labels_dict'],
-            property_extended_label_filepath=conversation_params['entity_parser']['wkprop_labels_filepath']
+            property_extended_label_filepath=conversation_params['entity_parser']['wkprop_labels_filepath'],
+            entity_emb_filepath=wk_kg_params['embeddings']['entity_emb_filepath'],
+            entity_id_mapping=wk_kg_params['embeddings']['entity_id_mapping'],
+            relation_emb=wk_kg_params['embeddings']['relation_emb'],
+            relation_id_mapping=wk_kg_params['embeddings']['relation_id_mapping']
         )
         self._template_answer = json.load(open(conversation_params['template_answer'], 'r'))
         self._media_q_regex_matcher = MediaQRegexMatcher()
@@ -68,7 +73,6 @@ class JuanitoBot(DemoBot):
 
                             # check if the message is new
                             if message['ordinal'] not in self.chat_state[room_id]['messages']:
-                                respone = None
 
                                 try:
                                     # Add message to list of messages of the agent
@@ -79,25 +83,16 @@ class JuanitoBot(DemoBot):
 
                                     ##### You should call your agent here and get the response message #####
                                     if intent == "Conversation":
-                                        response = self._respond_with_conversation(message['message'], room_id=room_id)
+                                        self._respond_with_conversation(message['message'], room_id=room_id)
 
                                     elif intent == "Factual Question/Embedding/Crowdsourcing":
                                         self._respond_kg_question(message['message'], room_id=room_id)
 
                                     elif intent == "Media Question":
                                         self._respond_media_request(message['message'], room_id=room_id)
-                                        response = None
 
                                     elif intent == 'Recommendation Questions':
-                                        response = self._respond_with_recommendation()
-
-                                    else:
-                                        response = "Sorry I don't really understand what you mean," \
-                                                   " could you please phrase it in simpler terms?"
-
-                                    if response:
-                                        self.post_message(room_id=room_id, session_token=self.session_token,
-                                                          message=response)
+                                        self._respond_with_recommendation()
 
                                 except Exception as e:
                                     print(e)
@@ -199,6 +194,7 @@ class JuanitoBot(DemoBot):
     def _respond_KG_question_using_embeddings(self, message: str, room_id: str, entity_id: str, property_id: str):
         response = "Use emebddings"
         print(message, entity_id, property_id)
+        self.wkdata_kg.kg_embeddings.deduce_object('Q5890', 'P58')
         return response
 
     def _respond_KG_question_using_crowd_kg(self, message: str, room_id: str, entity_id: str, property_id: str):
@@ -273,13 +269,17 @@ class JuanitoBot(DemoBot):
 if __name__ == '__main__':
     username = 'juandiego.bermeoortiz_bot'
     password = 'V2f80g-vpxEh7w'
+    bot = JuanitoBot(username, password)
+
     #password = getpass.getpass('Password of the demo bot:')
     #bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
     #bot._respond_kg_question("Who directed the godfather", 'roomid')
     #bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
+    bot._respond_kg_question("do you know who is the screenwriter of V for Vendetta?", 'roomid')
+    bot._respond_KG_question_using_embeddings("do you know who is the screenwriter of V for Vendetta?", 'roomid', 'Q5890', 'P58')
+
 
     reconnection_listening_attempts = 0
-    bot = JuanitoBot(username, password)
 
     try:
         bot.listen()

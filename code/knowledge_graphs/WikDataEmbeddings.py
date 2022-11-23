@@ -47,3 +47,9 @@ class WikiDataEmbeddings:
         # Compute ranks of entities
         ranks = dist.argsort().argsort()
 
+        # Calculate difference in distance between 1 and 10th option.
+        # All those below 10% of that distance are included as the answer
+        large_dist = dist[most_likely[0]] - dist[most_likely[10]]
+        plausible_objects = dist[most_likely[0]] - dist[most_likely[0: 10]] < 0.2 * large_dist
+
+        most_likely[plausible_objects]
