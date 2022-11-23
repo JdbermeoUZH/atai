@@ -53,6 +53,13 @@ class WikiDataKG(BasicKG):
 
         return None
 
+    def get_property_label(self, wk_prop_id: str) -> Optional[str]:
+
+        if wk_prop_id in self._property_extended_label_set.keys():
+            return self._property_extended_label_set[wk_prop_id][0]
+
+        return None
+
     def get_wkdata_entid_based_on_label_match(self, entity_string_to_match: str, ent_type: Optional[str] = None) \
             -> Optional[str]:
         wk_ent_id = None

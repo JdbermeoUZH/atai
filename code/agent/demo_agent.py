@@ -11,6 +11,12 @@ listen_freq = 3
 
 class DemoBot:
     def __init__(self, username, password):
+        self.chat_state = None
+        self.session_token = None
+        self.agent_details = None
+        self.connect(username, password)
+
+    def connect(self, username, password):
         self.agent_details = self.login(username, password)
         self.session_token = self.agent_details['sessionToken']
         self.chat_state = defaultdict(lambda: {'messages': defaultdict(dict), 'initiated': False, 'my_alias': None})

@@ -81,7 +81,7 @@ class FactQRegexMatcher(BasicRegexMatcher):
                     if matched_entity.strip() != '' and matched_property.strip() != '':
                         return matched_entity, matched_property
 
-        return None
+        return None, None
 
 
 if __name__ == '__main__':

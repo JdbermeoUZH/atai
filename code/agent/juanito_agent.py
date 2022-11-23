@@ -34,7 +34,8 @@ class JuanitoBot(DemoBot):
             kg_tuple_file_path=wk_kg_params['kg_filepath'],
             imdb2movienet_filepath=wk_kg_params['imdb2movinet_filepath'],
             entity_label_filepath=wk_kg_params['entity_labels_dict'],
-            property_label_filepath=wk_kg_params['property_labels_dict']
+            property_label_filepath=wk_kg_params['property_labels_dict'],
+            property_extended_label_filepath=conversation_params['entity_parser']['wkprop_labels_filepath']
         )
         self._template_answer = json.load(open(conversation_params['template_answer'], 'r'))
         self._media_q_regex_matcher = MediaQRegexMatcher()
@@ -67,6 +68,7 @@ class JuanitoBot(DemoBot):
 
                             # check if the message is new
                             if message['ordinal'] not in self.chat_state[room_id]['messages']:
+                                respone = None
 
                                 try:
                                     # Add message to list of messages of the agent
@@ -77,10 +79,10 @@ class JuanitoBot(DemoBot):
 
                                     ##### You should call your agent here and get the response message #####
                                     if intent == "Conversation":
-                                        response = self._respond_with_conversation()
+                                        response = self._respond_with_conversation(message['message'], room_id=room_id)
 
                                     elif intent == "Factual Question/Embedding/Crowdsourcing":
-                                        response = self._respond_KG_question()
+                                        self._respond_kg_question(message['message'], room_id=room_id)
 
                                     elif intent == "Media Question":
                                         self._respond_media_request(message['message'], room_id=room_id)
@@ -100,7 +102,7 @@ class JuanitoBot(DemoBot):
                                 except Exception as e:
                                     print(e)
                                     self.post_message(room_id=room_id, session_token=self.session_token,
-                                                      message=self._sample_template_answer("failure"))
+                                                      message=self._sample_template_answer("overall_failure"))
 
             time.sleep(listen_freq)
 
@@ -109,7 +111,6 @@ class JuanitoBot(DemoBot):
         return "Use conversational model"
 
     def _respond_kg_question(self, message: str, room_id: str):
-        answers = []
         wk_ent_id = None
         wk_prop_id = None
 
@@ -117,7 +118,9 @@ class JuanitoBot(DemoBot):
         wk_prop_ids = self.entityParser.return_wikidata_properties(doc=message)
         if len(wk_prop_ids) == 1:
             wk_prop_id = wk_prop_ids[0]
+
         elif len(wk_prop_ids) > 1:
+
             print("prompt user to ask about a single thing at a time")
 
         # Use spacy entity linkers to identify entities
@@ -137,16 +140,21 @@ class JuanitoBot(DemoBot):
             wk_ent_id = wkdata_ents[0]
 
         elif len(wkdata_ents) > 1:
-            print("prompt user to ask/mention only a single thing entity at a time")
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message=self._sample_template_answer('error_too_many_questions_fact_question'))
 
         # Use regex pattern to match predicate and entity (works for simple patterns)
         if wk_prop_id is None or wk_ent_id is None:
+            # Tell the user the search will take a bit longer
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message=self._sample_template_answer('longer_wait'))
+
             entity_str, property_str = self._fact_q_regex_matcher.match_string(message)
 
-            if wk_prop_id is None:
+            if wk_prop_id is None and property_str:
                 wk_prop_id = self.wkdata_kg.get_wkdata_propid_based_on_label_match(property_str)
 
-            if wk_ent_id is None:
+            if wk_ent_id is None and entity_str:
                 wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(entity_str, ent_type='person or movie')
 
         if wk_ent_id and wk_prop_id:
@@ -162,14 +170,16 @@ class JuanitoBot(DemoBot):
 
         # TODO: If the entity and property were identified but there is no object for it, answer it with embeddings
         if len(answers) == 0:
-            print('use embeddings')
+            # Tell the user the search will take a bit longer
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message=self._sample_template_answer('longer_wait'))
             self._respond_KG_question_using_embeddings(message=message, room_id=room_id,
                                                        entity_id=wk_ent_id, property_id=wk_prop_id)
 
         # If there is a single object, we can query the objects label and answer the question
         elif len(answers) == 1:
             entity_label = self.wkdata_kg.get_entity_label(wk_ent_id)
-            property_label = self.wkdata_kg.get_entity_label(wk_prop_id)
+            property_label = self.wkdata_kg.get_property_label(wk_prop_id)
             answer_label = self.wkdata_kg.get_entity_label(answers[0])
 
             self.post_message(
@@ -178,13 +188,17 @@ class JuanitoBot(DemoBot):
                     property=property_label, subject=entity_label, object=answer_label))
 
         elif len(answers) > 1:
+            # Tell the user the search will take a bit longer
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message=self._sample_template_answer('longer_wait'))
+
             # If more than one answer is found, answer it with crowd source data
             self._respond_KG_question_using_crowd_kg(message=message, room_id=room_id, entity_id=wk_ent_id,
                                                      property_id=wk_prop_id)
 
     def _respond_KG_question_using_embeddings(self, message: str, room_id: str, entity_id: str, property_id: str):
         response = "Use emebddings"
-        print(response)
+        print(message, entity_id, property_id)
         return response
 
     def _respond_KG_question_using_crowd_kg(self, message: str, room_id: str, entity_id: str, property_id: str):
@@ -217,7 +231,7 @@ class JuanitoBot(DemoBot):
 
         # Tell the user the search will take a bit longer
         self.post_message(room_id=room_id, session_token=self.session_token,
-                          message=self._sample_template_answer('longer wait'))
+                          message=self._sample_template_answer('longer_wait'))
 
         # If still no imdb ids where found, use regex patterns to extract relevant text and match to a KG entity label
         if len(imdb_ids) == 0:
@@ -260,9 +274,20 @@ if __name__ == '__main__':
     username = 'juandiego.bermeoortiz_bot'
     password = 'V2f80g-vpxEh7w'
     #password = getpass.getpass('Password of the demo bot:')
+    #bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
+    #bot._respond_kg_question("Who directed the godfather", 'roomid')
+    #bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
+
+    reconnection_listening_attempts = 0
     bot = JuanitoBot(username, password)
-    bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
-    bot._respond_kg_question("Who directed the godfather", 'roomid')
-    bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
-    bot.listen()
+
+    try:
+        bot.listen()
+    except Exception as e:
+        print(e)
+        reconnection_listening_attempts += 1
+        if reconnection_listening_attempts > 3:
+            raise e
+        bot.connect(username, password)
+        bot.listen()
 
