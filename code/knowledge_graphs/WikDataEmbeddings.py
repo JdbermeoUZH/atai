@@ -1,6 +1,6 @@
 import os
 import csv
-from typing import Union
+from typing import Tuple
 
 import rdflib
 import numpy as np
@@ -30,7 +30,8 @@ class WikiDataEmbeddings:
         self.ent2id, self.id2ent = _load_id_mappers(entity_id_mapping)
         self.rel2id, self.id2rel = _load_id_mappers(relation_id_mapping)
 
-    def deduce_object(self, wk_ent_id: str, wk_prop_id: str) -> Union[str, tuple[str]]:
+    def deduce_object(self, wk_ent_id: str, wk_prop_id: str,
+                      top_k: int = 10, ptg_max_diff_top_k: float = 0.2, report_max: int = 4) -> Tuple[str, ...]:
         # Retrieve the embeddings of the corresponding elements
         subj_emb = self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id]]]
         pred_emb = self.relation_emb[self.rel2id[self.namespaces.WDT[wk_prop_id]]]
@@ -44,12 +45,14 @@ class WikiDataEmbeddings:
         # Find most plausible entities
         most_likely = dist.argsort()
 
-        # Compute ranks of entities
-        ranks = dist.argsort().argsort()
-
         # Calculate difference in distance between 1 and 10th option.
         # All those below 10% of that distance are included as the answer
-        large_dist = dist[most_likely[0]] - dist[most_likely[10]]
-        plausible_objects = dist[most_likely[0]] - dist[most_likely[0: 10]] < 0.2 * large_dist
+        large_dist = dist[most_likely[top_k]] - dist[most_likely[0]]
+        plausible_objects = dist[most_likely[0: top_k]] - dist[most_likely[0]] < ptg_max_diff_top_k * large_dist
 
-        most_likely[plausible_objects]
+        object_emb_id_to_report = most_likely[0: top_k][plausible_objects]
+        object_emb_id_to_report = object_emb_id_to_report[:min(len(object_emb_id_to_report), report_max)]
+
+        return tuple([os.path.basename(str(self.id2ent[object_emb_id]))
+                      for object_emb_id in object_emb_id_to_report])
+

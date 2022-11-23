@@ -111,12 +111,9 @@ class JuanitoBot(DemoBot):
 
         # Use phrasematcher on entire string to detect properties
         wk_prop_ids = self.entityParser.return_wikidata_properties(doc=message)
+        # Only assign the entity if only one property is matched, otherwise it is too noisy
         if len(wk_prop_ids) == 1:
             wk_prop_id = wk_prop_ids[0]
-
-        elif len(wk_prop_ids) > 1:
-
-            print("prompt user to ask about a single thing at a time")
 
         # Use spacy entity linkers to identify entities
         _, spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities(
@@ -152,6 +149,11 @@ class JuanitoBot(DemoBot):
             if wk_ent_id is None and entity_str:
                 wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(entity_str, ent_type='person or movie')
 
+        # If still no property was found with the regex and we have multiple from the PhraseMatcher,
+        #   then pick one at random
+        if wk_prop_id is None and len(wk_prop_ids) > 1:
+            wk_prop_id = random.choice(wk_prop_ids)
+
         if wk_ent_id and wk_prop_id:
             # Get the object of the relation (wk_ent_id, wk_prop_id, object)
             answers = [os.path.basename(str(tuple_)) for tuple_ in self.wkdata_kg.kg.objects(
@@ -163,18 +165,21 @@ class JuanitoBot(DemoBot):
                               message=self._sample_template_answer('error_fact_question'))
             return
 
-        # TODO: If the entity and property were identified but there is no object for it, answer it with embeddings
+        # Report answer back
+        entity_label = self.wkdata_kg.get_entity_label(wk_ent_id)
+        property_label = self.wkdata_kg.get_property_label(wk_prop_id)
+
+        #If the entity and property were identified but there is no object for it, answer it with embeddings
         if len(answers) == 0:
             # Tell the user the search will take a bit longer
             self.post_message(room_id=room_id, session_token=self.session_token,
                               message=self._sample_template_answer('longer_wait'))
-            self._respond_KG_question_using_embeddings(message=message, room_id=room_id,
-                                                       entity_id=wk_ent_id, property_id=wk_prop_id)
 
-        # If there is a single object, we can query the objects label and answer the question
+            self._respond_kg_question_using_embeddings(room_id=room_id, entity_id=wk_ent_id, entity_label=entity_label,
+                                                       property_id=wk_prop_id, property_label=property_label)
+
+        # If there is a single object, we can query the objects label and answer the question directly
         elif len(answers) == 1:
-            entity_label = self.wkdata_kg.get_entity_label(wk_ent_id)
-            property_label = self.wkdata_kg.get_property_label(wk_prop_id)
             answer_label = self.wkdata_kg.get_entity_label(answers[0])
 
             self.post_message(
@@ -182,22 +187,39 @@ class JuanitoBot(DemoBot):
                 message=self._sample_template_answer('fact_question').format(
                     property=property_label, subject=entity_label, object=answer_label))
 
+        # If more than one entity is part of the answer, report it and double check on the crowdsourced dataset
         elif len(answers) > 1:
+            answer_labels = ', '.join([self.wkdata_kg.get_entity_label(answer) for answer in answers])
+
+            # Tell the user about the possible multiple answers:
+            self.post_message(
+                room_id=room_id, session_token=self.session_token,
+                message=self._sample_template_answer('fact_question_multiple_answers').format(
+                    property=property_label, subject=entity_label, objects=answer_labels))
+
             # Tell the user the search will take a bit longer
             self.post_message(room_id=room_id, session_token=self.session_token,
-                              message=self._sample_template_answer('longer_wait'))
+                              message=self._sample_template_answer('transition_to_crowdsourced_answer'))
 
-            # If more than one answer is found, answer it with crowd source data
-            self._respond_KG_question_using_crowd_kg(message=message, room_id=room_id, entity_id=wk_ent_id,
-                                                     property_id=wk_prop_id)
+            # If more than one answer is found, answer it with crowd-sourced data
+            self._respond_kg_question_using_crowd_kg(
+                room_id=room_id, entity_id=wk_ent_id, entity_label=entity_label,
+                property_id=wk_prop_id, property_label=property_label)
 
-    def _respond_KG_question_using_embeddings(self, message: str, room_id: str, entity_id: str, property_id: str):
-        response = "Use emebddings"
-        print(message, entity_id, property_id)
-        self.wkdata_kg.kg_embeddings.deduce_object('Q5890', 'P58')
-        return response
+    def _respond_kg_question_using_embeddings(
+            self, room_id: str, entity_id: str, entity_label: str,
+            property_id: str, property_label: str,
+            top_k: int = 10, ptg_max_diff_top_k: float = 0.2, report_max: int = 4):
+        answer_labels = self.wkdata_kg.deduce_object_using_embeddings(
+            entity_id, property_id, top_k, ptg_max_diff_top_k, report_max)
 
-    def _respond_KG_question_using_crowd_kg(self, message: str, room_id: str, entity_id: str, property_id: str):
+        self.post_message(
+            room_id=room_id, session_token=self.session_token,
+            message=self._sample_template_answer('embedding_question').format(
+                property=property_label, subject=entity_label, objects=answer_labels))
+
+    def _respond_kg_question_using_crowd_kg(self, room_id: str, entity_id: str, entity_label: str,
+                                            property_id: str, property_label: str):
         response = "Use crowd kg"
         print(response)
         return response
@@ -276,7 +298,7 @@ if __name__ == '__main__':
     #bot._respond_kg_question("Who directed the godfather", 'roomid')
     #bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
     bot._respond_kg_question("do you know who is the screenwriter of V for Vendetta?", 'roomid')
-    bot._respond_KG_question_using_embeddings("do you know who is the screenwriter of V for Vendetta?", 'roomid', 'Q5890', 'P58')
+    bot._respond_kg_question_using_embeddings('roomid', 'Q5890', 'V for Vendetta', 'P58', 'screen writer')
 
 
     reconnection_listening_attempts = 0

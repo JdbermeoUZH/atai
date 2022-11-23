@@ -1,9 +1,8 @@
 import json
 import os.path
+from typing import Optional, Tuple
 
 import numpy as np
-from typing import Optional
-
 from thefuzz import fuzz
 
 from knowledge_graphs.BasicKG import BasicKG
@@ -36,7 +35,7 @@ class WikiDataKG(BasicKG):
         ) if entity_emb_filepath and entity_id_mapping and relation_emb and relation_id_mapping else None
 
     def check_if_entity_in_kg(self, wk_ent_id: str) -> bool:
-        return str(self.namespaces.WDT[wk_ent_id]) in self.entity_labels_dict.keys()
+        return str(self.namespaces.WD[wk_ent_id]) in self.entity_labels_dict.keys()
 
     def check_if_property_in_kg(self, wk_prop_id: str) -> bool:
         return str(self.namespaces.WDT[wk_prop_id]) in self.property_labels_dict.keys()
@@ -117,6 +116,14 @@ class WikiDataKG(BasicKG):
             return self.imdb2movienet[imdb_id]
         else:
             return None
+
+    def deduce_object_using_embeddings(
+            self,
+            wk_ent_id: str, wk_prop_id: str,
+            top_k: int = 10, ptg_max_diff_top_k: float = 0.2, report_max: int = 4) -> Tuple[str, ...]:
+
+        wk_ent_ids = self.kg_embeddings.deduce_object(wk_ent_id, wk_prop_id, top_k, ptg_max_diff_top_k, report_max)
+        return tuple([self.get_entity_label(wk_ent_id) for wk_ent_id in wk_ent_ids])
 
 
 if __name__ == '__main__':
