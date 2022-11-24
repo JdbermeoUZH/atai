@@ -209,14 +209,14 @@ class JuanitoBot(DemoBot):
     def _respond_kg_question_using_embeddings(
             self, room_id: str, entity_id: str, entity_label: str,
             property_id: str, property_label: str,
-            top_k: int = 10, ptg_max_diff_top_k: float = 0.2, report_max: int = 4):
+            top_k: int = 10, ptg_max_diff_top_k: float = 0.6, report_max: int = 4):
         answer_labels = self.wkdata_kg.deduce_object_using_embeddings(
             entity_id, property_id, top_k, ptg_max_diff_top_k, report_max)
 
         self.post_message(
             room_id=room_id, session_token=self.session_token,
             message=self._sample_template_answer('embedding_question').format(
-                property=property_label, subject=entity_label, objects=answer_labels))
+                property=property_label, subject=entity_label, objects=', '.join(answer_labels)))
 
     def _respond_kg_question_using_crowd_kg(self, room_id: str, entity_id: str, entity_label: str,
                                             property_id: str, property_label: str):
@@ -299,7 +299,6 @@ if __name__ == '__main__':
     #bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
     bot._respond_kg_question("do you know who is the screenwriter of V for Vendetta?", 'roomid')
     bot._respond_kg_question_using_embeddings('roomid', 'Q5890', 'V for Vendetta', 'P58', 'screen writer')
-
 
     reconnection_listening_attempts = 0
 
