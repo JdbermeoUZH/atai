@@ -9,14 +9,14 @@ conversation_config:
 
   entity_parser:
     model_size: 'trf'                                                         # 'sm', 'md', 'lg', 'trf'
-    wkprop_labels_filepath: '../setup_data/wikidata_kg/wk_data_names_props_of_interest.json'
+    wkprop_labels_filepath: '../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json'
 
   knowledge_graphs:
     wikidata:
       kg_filepath: '../setup_data/wikidata_kg/14_graph.nt'
-      imdb2movinet_filepath: '../setup_data/wikidata_kg/imdb2movienet.json'
-      entity_labels_dict: '../setup_data/wikidata_kg/wkdata_entity_labels_dict.json'
-      property_labels_dict: '../setup_data/wikidata_kg/wkdata_property_labels_dict.json'
+      imdb2movinet_filepath: '../setup_data/wikidata_kg/id_mappings/imdb2movienet.json'
+      entity_labels_dict: '../setup_data/wikidata_kg/id_labels/wkdata_entity_labels_dict.json'
+      property_labels_dict: '../setup_data/wikidata_kg/id_labels/wkdata_property_labels_dict.json'
 
       embeddings:
         entity_emb_filepath: '../setup_data/wikidata_kg/embeddings/entity_embeds.npy'

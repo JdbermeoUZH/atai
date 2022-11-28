@@ -77,7 +77,7 @@ class EntityPropertyParser:
 
 if __name__ == "__main__":
     entityPaser = EntityPropertyParser(
-        property_extended_label_filepath='../../setup_data/wikidata_kg/wk_data_names_props_of_interest.json', model_type='trf')
+        property_extended_label_filepath='../../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json', model_type='trf')
     doc, ents, wkdata_ents = entityPaser.return_wikidata_entities("I want to see a picture of Julia Roberts nd Keanu Reaves in the city of Pitalito and Bordones")
     print(ents)
     print(wkdata_ents)
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     print(len(wkdata_ents))
 
     # Test property matching with phrase matcher
-    prop_label_dict = json.load(open('../../setup_data/wikidata_kg/wk_data_names_props_of_interest.json', 'r'))
+    prop_label_dict = json.load(open('../../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json', 'r'))
 
     input_str = "Who is the director of the matrix"
     entity_detected = entityPaser.return_wikidata_properties(input_str)

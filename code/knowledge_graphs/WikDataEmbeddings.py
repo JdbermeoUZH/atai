@@ -39,20 +39,70 @@ class WikiDataEmbeddings:
         # Add vectors according to TransE scoring function.
         pred_obj_emb = subj_emb + pred_emb
 
+        dist_top_k, top_k_emb_ids = self._return_most_similar_entites(embedding=pred_obj_emb, top_k=top_k)
+
+        # Calculate difference in distance between 1 and 10th option.
+        # All those below 10% of that distance are included as the answer
+        large_dist = dist_top_k[-1] - dist_top_k[0]
+        plausible_objects = dist_top_k - dist_top_k[0] < ptg_max_diff_top_k * large_dist
+
+        object_emb_id_to_report = top_k_emb_ids[plausible_objects]
+        object_emb_id_to_report = tuple(object_emb_id_to_report[:min(len(object_emb_id_to_report), report_max)])
+
+        return object_emb_id_to_report
+
+
+    def get_most_similar_entities_to_centroid(self, wk_ent_id_list: list, top_k: int = 10):
+        # Get embedding for centroid
+        centroid = self._calculate_centroid(wk_ent_id_list)
+
+        # Get the entities most similar to the centroid
+        _, closest_entities = self._return_most_similar_entites(centroid, top_k=top_k + len(wk_ent_id_list))
+
+        # Remove the entities that compose the cnentroid
+        closest_entities = [entity for entity in closest_entities if entity not in wk_ent_id_list]
+        closest_entities = closest_entities[: top_k]
+
+        return closest_entities
+
+    def _return_most_similar_entites(self, embedding: np.ndarray, top_k: int = 10) -> Tuple[np.ndarray, np.ndarray]:
         # Compute distance to *any* entity
-        dist = pairwise_distances(pred_obj_emb.reshape(1, -1), self.entity_emb).reshape(-1)
+        dist = pairwise_distances(embedding.reshape(1, -1), self.entity_emb).reshape(-1)
 
         # Find most plausible entities
         most_likely = dist.argsort()
 
-        # Calculate difference in distance between 1 and 10th option.
-        # All those below 10% of that distance are included as the answer
-        large_dist = dist[most_likely[top_k]] - dist[most_likely[0]]
-        plausible_objects = dist[most_likely[0: top_k]] - dist[most_likely[0]] < ptg_max_diff_top_k * large_dist
+        # Return the top_k closest entities
+        dist_top_k_entities = dist[most_likely[0: top_k]]
+        id_top_k_closest_entities = np.array(
+            [os.path.basename(str(self.id2ent[object_emb_id])) for object_emb_id in most_likely[0: top_k]])
+        return dist_top_k_entities, id_top_k_closest_entities
 
-        object_emb_id_to_report = most_likely[0: top_k][plausible_objects]
-        object_emb_id_to_report = object_emb_id_to_report[:min(len(object_emb_id_to_report), report_max)]
+    def _calculate_centroid(self, wk_ent_id_list: list) -> np.ndarray:
+        centroid_emb = None
+        for i, wk_ent_id_i in enumerate(wk_ent_id_list):
+            if i == 0:
+                centroid_emb = self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id_i]]]
+            else:
+                centroid_emb += self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id_i]]]
 
-        return tuple([os.path.basename(str(self.id2ent[object_emb_id]))
-                      for object_emb_id in object_emb_id_to_report])
+        return centroid_emb/len(wk_ent_id_list)
+
+
+if __name__ == '__main__':
+    # Get the the entity embeddings closest to the lion king
+    wk_emb = WikiDataEmbeddings(
+        entity_emb_filepath='../../setup_data/wikidata_kg/embeddings/entity_embeds.npy',
+        entity_id_mapping='../../setup_data/wikidata_kg/embeddings/entity_ids.del',
+        relation_emb='../../setup_data/wikidata_kg/embeddings/relation_embeds.npy',
+        relation_id_mapping='../../setup_data/wikidata_kg/embeddings/relation_ids.del'
+    )
+
+    a = wk_emb.deduce_object(wk_ent_id='Q36479', wk_prop_id='P495')
+
+    b = wk_emb.get_most_similar_entities_to_centroid(
+        ['Q179673', 'Q36479', 'Q179673'], top_k=10
+    )
+    print(b)
+
 

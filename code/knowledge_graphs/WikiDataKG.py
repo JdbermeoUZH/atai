@@ -1,29 +1,33 @@
 import json
 import os.path
-from typing import Optional, Tuple
+import random
+from typing import Optional, Tuple, Dict
 
 import numpy as np
 from thefuzz import fuzz
 
 from knowledge_graphs.BasicKG import BasicKG
 from knowledge_graphs.WikDataEmbeddings import WikiDataEmbeddings
-from knowledge_graphs.wikidata_queries import imdb_query, person_exact_lowercase_label_match, exact_lowercase_label_match, person_or_film_lowercase_label_match, label_query
+from knowledge_graphs import wikidata_queries
 
 
 class WikiDataKG(BasicKG):
     def __init__(self,
                  kg_tuple_file_path: str,
                  imdb2movienet_filepath: str,
-                 entity_label_filepath: Optional[str] = None,
-                 property_label_filepath: Optional[str] = None,
-                 property_extended_label_filepath: Optional[str] = None,
-                 entity_emb_filepath: str = None,
-                 entity_id_mapping: str = None,
-                 relation_emb: str = None,
-                 relation_id_mapping: str = None
+                 entity_label_filepath: Optional[str],
+                 property_label_filepath: Optional[str],
+                 property_extended_label_filepath: Optional[str],
+                 entity_emb_filepath: str,
+                 entity_id_mapping: str,
+                 relation_emb: str,
+                 relation_id_mapping: str,
+                 recomendation_rules_filepath: str
                  ):
         super().__init__(kg_tuple_file_path, entity_label_filepath, property_label_filepath)
+
         self.imdb2movienet = json.load(open(imdb2movienet_filepath, 'r'))
+
         self._property_extended_label_set = json.load(open(property_extended_label_filepath, 'r')) \
             if property_extended_label_filepath else None
 
@@ -33,6 +37,8 @@ class WikiDataKG(BasicKG):
             relation_emb=relation_emb,
             relation_id_mapping=relation_id_mapping
         ) if entity_emb_filepath and entity_id_mapping and relation_emb and relation_id_mapping else None
+
+        self.recommendation_rules_dict = json.load(open(recomendation_rules_filepath, 'r'))
 
     def check_if_entity_in_kg(self, wk_ent_id: str) -> bool:
         return str(self.namespaces.WD[wk_ent_id]) in self.entity_labels_dict.keys()
@@ -45,7 +51,7 @@ class WikiDataKG(BasicKG):
 
     def get_imdb_id(self, wk_ent_id: str) -> Optional[str]:
         if self.check_if_entity_in_kg(wk_ent_id):
-            query_result = self.kg.query(imdb_query, initBindings={"id": self.namespaces.WD[wk_ent_id]})
+            query_result = self.kg.query(wikidata_queries.imdb_query, initBindings={"id": self.namespaces.WD[wk_ent_id]})
             imdb_ids = [str(imdb[0]) for imdb in query_result]
 
             if len(imdb_ids) >= 1:
@@ -73,13 +79,16 @@ class WikiDataKG(BasicKG):
 
         # First try exact lower case match with SPARQL
         if ent_type is None:
-            query_result = self.kg.query(exact_lowercase_label_match.format(entity_string_to_match))
+            query_result = self.kg.query(
+                wikidata_queries.exact_lowercase_label_match.format(entity_string_to_match))
 
         elif ent_type == 'person':
-            query_result = self.kg.query(person_exact_lowercase_label_match.format(entity_string_to_match))
+            query_result = self.kg.query(
+                wikidata_queries.person_exact_lowercase_label_match.format(entity_string_to_match))
 
         elif ent_type == 'person or movie':
-            query_result = self.kg.query(person_or_film_lowercase_label_match.format(entity_string_to_match))
+            query_result = self.kg.query(
+                wikidata_queries.person_or_film_lowercase_label_match.format(entity_string_to_match))
 
         detected_wk_entities = [str(wk_ent_id) for wk_ent_id, _ in query_result]
 
@@ -125,18 +134,96 @@ class WikiDataKG(BasicKG):
         wk_ent_ids = self.kg_embeddings.deduce_object(wk_ent_id, wk_prop_id, top_k, ptg_max_diff_top_k, report_max)
         return tuple([self.get_entity_label(wk_ent_id) for wk_ent_id in wk_ent_ids])
 
+    def _recommend_similar_movies_and_characateristics(
+            self, wk_ent_id_list: list,
+            top_k: int = 10,
+            num_criteria_to_report: int = 3,
+            num_movies_to_report: int = 4,
+    ) -> Tuple[dict, list]:
+
+        # Get the list of the closest_movies
+        closest_ents = self.kg_embeddings.get_most_similar_entities_to_centroid(wk_ent_id_list, top_k)
+
+        # Check for common property values accross all the closest movies
+        one_hop_recs = self._evaluate_recomendation_rule(
+            closest_ents,
+            rec_rules=self.recommendation_rules_dict['one-hop'],
+            query=wikidata_queries.one_hop_prop_count,
+            top_k=top_k
+        )
+
+        two_hop_recs = self._evaluate_recomendation_rule(
+            closest_ents,
+            rec_rules=self.recommendation_rules_dict['two-hop'],
+            query=wikidata_queries.two_hop_prop_count,
+            top_k=top_k
+        )
+
+        # Remove criteria that might be redundant
+        if 'instance of' and 'genre' in one_hop_recs.keys():
+            del one_hop_recs['instance of']
+
+        if 'director' and 'screenwriter' in one_hop_recs.keys():
+            del one_hop_recs['screenwriter']
+
+        if 'based on' and 'inspired by' in one_hop_recs.keys():
+            del one_hop_recs['inspired by']
+
+        if 'country of origin' and 'narrative location' in one_hop_recs.keys():
+            del one_hop_recs['country of origin']
+
+        if 'based on' in one_hop_recs.keys() and 'based on' in two_hop_recs.keys():
+            del two_hop_recs['based on']
+
+        if 'inspired by' in one_hop_recs.keys() and 'inspired by' in two_hop_recs.keys():
+            del two_hop_recs['inspired by']
+
+        recs = one_hop_recs | two_hop_recs
+
+        # Pick num_criteria elements to report to the user
+        if len(recs.keys()) > num_criteria_to_report:
+            criteria_to_use = random.sample(list(recs.keys()), num_criteria_to_report)
+            recs = {k: v for k, v in recs.items() if k in criteria_to_use}
+
+        # Pick movies to recommend
+        movies_to_report = [self.entity_labels_dict[str(self.namespaces.WD[closest_ent])] for
+          closest_ent in closest_ents[0: num_movies_to_report]]
+
+        return recs, movies_to_report
+
+    def _evaluate_recomendation_rule(self, closest_ents, rec_rules: dict, query: str, top_k: int):
+        criteria_to_recommend = {}
+        for wk_prop_id, rule_params in rec_rules.items():
+            common_prop = self.kg.query(
+                query.format(
+                    property_id=wk_prop_id,
+                    wk_ent_list=', '.join([f'wd:{wk_ent_id}' for wk_ent_id in closest_ents]))
+            )
+
+            # Only add to the list entities of each property that are over the threshold
+            #   and exclude labels in rule_params['exclude']
+            tuples_meet_rule = [str(triple[1]) for triple in common_prop
+                                if int(triple[2]) / top_k > rule_params['threshold'] and
+                                str(triple[1]) not in rule_params['exclude']]
+
+            if len(tuples_meet_rule) > 0:
+                criteria_to_recommend[rule_params['label']] = tuples_meet_rule
+
+        return criteria_to_recommend
+
 
 if __name__ == '__main__':
     kg = WikiDataKG(
         kg_tuple_file_path='../setup_data/wikidata_kg/14_graph.nt',
-        imdb2movienet_filepath='../setup_data/wikidata_kg/imdb2movienet.json',
-        entity_label_filepath='../setup_data/wikidata_kg/wkdata_entity_labels_dict.json',
-        property_label_filepath='../setup_data/wikidata_kg/wkdata_property_labels_dict.json',
-        property_extended_label_filepath='../setup_data/wikidata_kg/wk_data_names_props_of_interest.json',
+        imdb2movienet_filepath='../setup_data/wikidata_kg/id_mappings/imdb2movienet.json',
+        entity_label_filepath='../setup_data/wikidata_kg/id_labels/wkdata_entity_labels_dict.json',
+        property_label_filepath='../setup_data/wikidata_kg/id_labels/wkdata_property_labels_dict.json',
+        property_extended_label_filepath='../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json',
         entity_emb_filepath='../setup_data/wikidata_kg/embeddings/entity_embeds.npy',
         entity_id_mapping='../setup_data/wikidata_kg/embeddings/entity_ids.del',
         relation_emb='../setup_data/wikidata_kg/embeddings/relation_embeds.npy',
-        relation_id_mapping='../setup_data/wikidata_kg/embeddings/relation_ids.del'
+        relation_id_mapping='../setup_data/wikidata_kg/embeddings/relation_ids.del',
+        recomendation_rules_filepath='../setup_data/wikidata_kg/recommendation/rec_rules.json'
     )
 
     assert kg.get_imdb_id(wk_ent_id='Q40523') == 'nm0000210'
@@ -144,7 +231,10 @@ if __name__ == '__main__':
     assert kg.imdb2movienet['nm0000770']
 
     assert kg.get_wkdata_entid_based_on_label_match('Martin Scorsese') == 'Q41148'
+    print(kg._recommend_similar_movies_and_characateristics(['Q179673', 'Q36479', 'Q218894']))
     assert kg.get_wkdata_entid_based_on_label_match('Martin Scorsese', ent_type='person') == 'Q41148'
     assert kg.get_wkdata_entid_based_on_label_match('Martin Scorssese') == 'Q41148'
+
+
 
 
