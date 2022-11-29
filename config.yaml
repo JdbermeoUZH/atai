@@ -3,13 +3,16 @@ chatroom_server:
 
 conversation_config:
   listen_freq: 5                                                              # How long to wait after giving a response
-  template_answer: '../setup_data/template_answers.json'                       # Json file with template answers
+  template_answer: '../setup_data/template_answers/template_answers.json'                       # Json file with template answers
   first_funnel_info:
     classifier_train_data: '../setup_data/first_filter_train_examples.json'
 
   entity_parser:
     model_size: 'trf'                                                         # 'sm', 'md', 'lg', 'trf'
     wkprop_labels_filepath: '../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json'
+
+  recommendations:
+    rec_template_answer: '../setup_data/template_answers/recommendation_questions.json'
 
   knowledge_graphs:
     wikidata:
@@ -23,6 +26,9 @@ conversation_config:
         entity_id_mapping: '../setup_data/wikidata_kg/embeddings/entity_ids.del'
         relation_emb: '../setup_data/wikidata_kg/embeddings/relation_embeds.npy'
         relation_id_mapping: '../setup_data/wikidata_kg/embeddings/relation_ids.del'
+
+      recommendations:
+        rec_rules_filepath: '../setup_data/wikidata_kg/recommendation/rec_rules.json'
 
     crowd_sourcing:
       kg_filepath: '../setup_data/14_graph.tsv'

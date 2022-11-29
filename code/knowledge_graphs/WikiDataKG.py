@@ -134,7 +134,7 @@ class WikiDataKG(BasicKG):
         wk_ent_ids = self.kg_embeddings.deduce_object(wk_ent_id, wk_prop_id, top_k, ptg_max_diff_top_k, report_max)
         return tuple([self.get_entity_label(wk_ent_id) for wk_ent_id in wk_ent_ids])
 
-    def _recommend_similar_movies_and_characateristics(
+    def recommend_similar_movies_and_characateristics(
             self, wk_ent_id_list: list,
             top_k: int = 10,
             num_criteria_to_report: int = 3,
@@ -160,16 +160,16 @@ class WikiDataKG(BasicKG):
         )
 
         # Remove criteria that might be redundant
-        if 'instance of' and 'genre' in one_hop_recs.keys():
+        if 'instance of' in one_hop_recs.keys() and 'genre' in one_hop_recs.keys():
             del one_hop_recs['instance of']
 
-        if 'director' and 'screenwriter' in one_hop_recs.keys():
+        if 'director' in one_hop_recs.keys() and 'screenwriter' in one_hop_recs.keys():
             del one_hop_recs['screenwriter']
 
-        if 'based on' and 'inspired by' in one_hop_recs.keys():
+        if 'based on' in one_hop_recs.keys() and 'inspired by' in one_hop_recs.keys():
             del one_hop_recs['inspired by']
 
-        if 'country of origin' and 'narrative location' in one_hop_recs.keys():
+        if 'country of origin' in one_hop_recs.keys() and 'narrative location' in one_hop_recs.keys():
             del one_hop_recs['country of origin']
 
         if 'based on' in one_hop_recs.keys() and 'based on' in two_hop_recs.keys():
@@ -186,10 +186,17 @@ class WikiDataKG(BasicKG):
             recs = {k: v for k, v in recs.items() if k in criteria_to_use}
 
         # Pick movies to recommend
-        movies_to_report = [self.entity_labels_dict[str(self.namespaces.WD[closest_ent])] for
-          closest_ent in closest_ents[0: num_movies_to_report]]
+        # First remove duplicate names
+        closest_movies_str_set = set([self.entity_labels_dict[str(self.namespaces.WD[closest_ent])]
+                                      for closest_ent in closest_ents])
 
-        return recs, movies_to_report
+        # Then remove names that overlap with names of the input
+        ref_movie_str = set([self.entity_labels_dict[str(self.namespaces.WD[wk_ent_id])]
+                             for wk_ent_id in wk_ent_id_list])
+        closest_movies_str_list = list(closest_movies_str_set - ref_movie_str)
+        closest_movies_str_list = closest_movies_str_list[0: min(num_movies_to_report, len(closest_movies_str_list))]
+
+        return recs, closest_movies_str_list
 
     def _evaluate_recomendation_rule(self, closest_ents, rec_rules: dict, query: str, top_k: int):
         criteria_to_recommend = {}

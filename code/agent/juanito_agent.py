@@ -10,6 +10,7 @@ from models.InteractionTypeClassifier import InteractionTypeClassifier
 from demo_agent import DemoBot
 from regex_matchers.MediaQRegexMatcher import MediaQRegexMatcher
 from regex_matchers.FactQRegexMatcher import FactQRegexMatcher
+from regex_matchers.RecQRegexMatcher import RecQRegexMatcher
 from utils.utils import get_args_config_file
 
 # Load configurations
@@ -40,11 +41,15 @@ class JuanitoBot(DemoBot):
             entity_emb_filepath=wk_kg_params['embeddings']['entity_emb_filepath'],
             entity_id_mapping=wk_kg_params['embeddings']['entity_id_mapping'],
             relation_emb=wk_kg_params['embeddings']['relation_emb'],
-            relation_id_mapping=wk_kg_params['embeddings']['relation_id_mapping']
+            relation_id_mapping=wk_kg_params['embeddings']['relation_id_mapping'],
+            recomendation_rules_filepath=wk_kg_params['recommendations']['rec_rules_filepath']
         )
+
         self._template_answer = json.load(open(conversation_params['template_answer'], 'r'))
+        self._template_rec_answer = json.load(open(conversation_params['recommendations']['rec_template_answer'], 'r'))
         self._media_q_regex_matcher = MediaQRegexMatcher()
         self._fact_q_regex_matcher = FactQRegexMatcher()
+        self._rec_q_regex_matcher = RecQRegexMatcher()
         print('Ready to go!')
 
     def listen(self):
@@ -64,7 +69,8 @@ class JuanitoBot(DemoBot):
                         self.chat_state[room_id]['my_alias'] = room['alias']
 
                     # check for all messages
-                    all_messages = self.check_room_state(room_id=room_id, since=0, session_token=self.session_token)['messages']
+                    all_messages = self.check_room_state(
+                        room_id=room_id, since=0, session_token=self.session_token)['messages']
 
                     # you can also use ["reactions"] to get the reactions of the messages: STAR, THUMBS_UP, THUMBS_DOWN
 
@@ -81,7 +87,6 @@ class JuanitoBot(DemoBot):
                                     # Classify the intent or type of interaction requested in the message
                                     intent = self.first_funnel_filter(message['message'])
 
-                                    ##### You should call your agent here and get the response message #####
                                     if intent == "Conversation":
                                         self._respond_with_conversation(message['message'], room_id=room_id)
 
@@ -92,7 +97,7 @@ class JuanitoBot(DemoBot):
                                         self._respond_media_request(message['message'], room_id=room_id)
 
                                     elif intent == 'Recommendation Questions':
-                                        self._respond_with_recommendation()
+                                        self._respond_with_recommendation(message=message['message'], room_id=room_id)
 
                                 except Exception as e:
                                     print(e)
@@ -169,7 +174,7 @@ class JuanitoBot(DemoBot):
         entity_label = self.wkdata_kg.get_entity_label(wk_ent_id)
         property_label = self.wkdata_kg.get_property_label(wk_prop_id)
 
-        #If the entity and property were identified but there is no object for it, answer it with embeddings
+        # If the entity and property were identified but there is no object for it, answer it with embeddings
         if len(answers) == 0:
             # Tell the user the search will take a bit longer
             self.post_message(room_id=room_id, session_token=self.session_token,
@@ -210,6 +215,7 @@ class JuanitoBot(DemoBot):
             self, room_id: str, entity_id: str, entity_label: str,
             property_id: str, property_label: str,
             top_k: int = 10, ptg_max_diff_top_k: float = 0.6, report_max: int = 4):
+
         answer_labels = self.wkdata_kg.deduce_object_using_embeddings(
             entity_id, property_id, top_k, ptg_max_diff_top_k, report_max)
 
@@ -247,9 +253,6 @@ class JuanitoBot(DemoBot):
                 if imdb_id is not None:
                     imdb_ids.append(imdb_id)
 
-        # Tell the user the search will take a bit longer
-        self.post_message(room_id=room_id, session_token=self.session_token,
-                          message=self._sample_template_answer('longer_wait'))
 
         # If still no imdb ids where found, use regex patterns to extract relevant text and match to a KG entity label
         if len(imdb_ids) == 0:
@@ -280,25 +283,89 @@ class JuanitoBot(DemoBot):
             for movienet_id in movienet_ids:
                 self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_id}')
 
-    def _respond_with_recommendation(self):
-        print("Recommend a collection of movies using the KG")
-        return "Recommend a collection of movies using the KG"
+    def _respond_with_recommendation(self, message: str, room_id: str):
+        movie_wk_ent_id = []
+        # Use entity linker to find named entities of interest and their respective wikidata ids
+        spacy_proc_doc, spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities(
+            message, entities_of_interest=("WORK_OF_ART", ))
+        movie_wk_ent_id += list(wkdata_ents.keys())
+
+        # If no wikidata ent related to movies is detected, try to match the detected named entities to movies
+        if len(movie_wk_ent_id) < 2:
+            for ent in spacy_ents:
+                # Try to match a wk_ent id
+                movie_wk_ent_id.append(self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text))
+
+        if len(movie_wk_ent_id) < 2:
+            # Try to find entities that match movie titles extracted with regex
+            movie_list = self._rec_q_regex_matcher.match_string(message)
+            movie_wk_ent_id = [self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str)
+                               for extracted_str in movie_list]
+            movie_wk_ent_id = [wkdata_ent for wkdata_ent in movie_wk_ent_id if wkdata_ent is not None]
+
+            if len(movie_wk_ent_id) == 0:
+                print("send Q to conversational agent")
+                return
+
+        self.post_message(room_id=room_id, session_token=self.session_token,
+                          message=random.choice(self._template_rec_answer['longer_wait']))
+
+        movie_wk_ent_id = list(set(movie_wk_ent_id))
+        recs, movies_to_recommend = self.wkdata_kg.recommend_similar_movies_and_characateristics(movie_wk_ent_id)
+
+        if recs == {}:
+            print("send Q to conversational agent, as no recommendation criteria was met")
+            return
+
+        sentence_start = random.choice(self._template_rec_answer['sentence_start'])
+        sentence_subject = random.choice(self._template_rec_answer['subject'])
+
+        criteria_recommendations = []
+        for criteria, things_to_recommend in recs.items():
+            rec_list = ', or '.join(things_to_recommend)
+            criteria_recommendation = random.choice(
+                self._template_rec_answer[criteria]).format(rec_list=rec_list)
+            criteria_recommendations.append(criteria_recommendation)
+
+        criteria_recommendations = '; '.join(criteria_recommendations) if len(criteria_recommendations) > 1 else \
+            criteria_recommendations[0]
+
+        # Sample randomly the number of movies to recommend to have more variation during the interaction
+        movies_to_recommend = movies_to_recommend[0:random.randint(2, len(movies_to_recommend))]
+        movie_recommendation_template = random.choice(self._template_rec_answer['complement'])
+        movie_recommendation = movie_recommendation_template.format(
+            movie_list=', '.join(movies_to_recommend[:-1]) + f', and {movies_to_recommend[-1]}'
+        )
+
+        recomendation_str = f"{sentence_start} {sentence_subject} {criteria_recommendations}. {movie_recommendation}"
+
+        self.post_message(
+            room_id=room_id, session_token=self.session_token, message=recomendation_str.encode('utf-8')
+        )
 
     def _sample_template_answer(self, interaction_type: str) -> str:
         return random.choice(self._template_answer[interaction_type])
 
+    def _sample_template_rec_answer(self, interaction_type: str) -> str:
+        return random.choice(self._template_answer[interaction_type])
+
 
 if __name__ == '__main__':
-    username = 'juandiego.bermeoortiz_bot'
-    password = 'V2f80g-vpxEh7w'
-    bot = JuanitoBot(username, password)
+    username_ = 'juandiego.bermeoortiz_bot'
+    password_ = 'V2f80g-vpxEh7w'
+    bot = JuanitoBot(username_, password_)
 
-    #password = getpass.getpass('Password of the demo bot:')
-    #bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
-    #bot._respond_kg_question("Who directed the godfather", 'roomid')
+    # password = getpass.getpass('Password of the demo bot:')
+    # bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
+    # bot._respond_kg_question("Who directed the godfather", 'roomid')
+    # bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
+    bot._respond_with_recommendation("Recommend movies like Nightmare on Elm Street, Friday the 13th and Halloween", 'roomid')
+    bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "room_id")
+    bot._respond_kg_question("Who is the director of Star Wars: Episode VI - Return of the Jedi?", "room_id")
     #bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
-    bot._respond_kg_question("do you know who is the screenwriter of V for Vendetta?", 'roomid')
-    bot._respond_kg_question_using_embeddings('roomid', 'Q5890', 'V for Vendetta', 'P58', 'screen writer')
+
+    bot.first_funnel_filter("Recommend movies like Nightmare on Elm Street, Friday the 13th and Halloween")
+
 
     reconnection_listening_attempts = 0
 
@@ -309,6 +376,6 @@ if __name__ == '__main__':
         reconnection_listening_attempts += 1
         if reconnection_listening_attempts > 3:
             raise e
-        bot.connect(username, password)
+        bot.connect(username_, password_)
         bot.listen()
 

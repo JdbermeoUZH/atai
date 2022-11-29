@@ -1,0 +1,70 @@
+
+Crear el cluster y halar las peliculas mas similares al cluster:
+
+Verificar cuales caracteristicas son las mas comunes del top 10 (Excluyendo a las peliculas del cluster):
+
+Ver cuales tienen una frecuencia relativa alta (>50% or 80%). Si la tienen, 
+incluirla como constraint de la recomendacion
+ - 1-hop -> instace_of (P31: (anything besides just film) 
+ - 1-hop -> genre (P136):     
+ - 1-hop -> director (P57):
+ - 1-hop -> screenwriter (P58):
+ - 1-hop -> art_director (P3174):
+ - 1-hop -> cast member (P161):
+ 
+  - 1-hop -> narrative_location(P840)
+  - 1-hop -> country_of_origin(P495) except the US (Q30) use short name: P1813
+  - 1-hop -> color(P462) is black_and_white(Q838368)
+  - 1-hop -> part_of_series(Property:P179)
+   
+ - 1-hop -> publication_date (P577):
+ - 1-hop -> set_in_period(P2408): 
+
+
+
+
+ - 1-hop -> main_subject: P921
+ 
+ 
+ 
+ - 2-hops -> based_on, inspired_by(P941) -> instance_of (things that have the same instance of(P31): folktale, literary work, etc.)
+          -> after_a work_by(P1877), inspired_by(P941) -> label
+  
+  
+  
+prefix wdt: <http://www.wikidata.org/prop/direct/>
+prefix wd: <http://www.wikidata.org/entity/>
+SELECT DISTINCT ?genre ?genre_label (COUNT(?genre) AS ?count) 
+WHERE {{
+    ?id wdt:P31 ?genre .
+    ?genre rdfs:label ?genre_label .
+    FILTER (?id IN (wd:Q179673, wd:Q218894, wd:Q36479))
+    FILTER(LANG(?genre_label) = "en").
+}}
+group by ?genre ?genre_label
+
+SELECT DISTINCT ?prop ?prop_label (COUNT(?prop) AS ?prop_count) 
+WHERE {
+    ?id wdt:P136 ?prop .
+    ?prop rdfs:label ?prop_label .
+    FILTER (?id IN (wd:Q215518, wd:Q213787, wd:Q190135, wd:Q202371, wd:Q208696, wd:Q216929, wd:Q392530, wd:Q271189, wd:Q318975, wd:Q334132))
+    FILTER(LANG(?prop_label) = "en").
+}
+GROUP BY ?prop ?prop_label
+ORDER BY DESC(?prop_count) 
+
+TODO:
+
+ - Agregar metodo de devolver lista de wk_ent_ids y sus labels que son mas cercanos al centroide de una lista de wk_ents
+ 
+ - Agregar
+ 
+ query = Q179673, Q36479, Q179673
+ 
+ Q215518
+ Q218894 
+ 
+ Q213787
+ 
+ 
+ ['Q16561429', 'Q1139696', 'Q751401']
