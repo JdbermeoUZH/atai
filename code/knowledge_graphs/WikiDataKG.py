@@ -143,10 +143,14 @@ class WikiDataKG(BasicKG):
     def deduce_object_using_embeddings(
             self,
             wk_ent_id: str, wk_prop_id: str,
-            top_k: int = 10, ptg_max_diff_top_k: float = 0.2, report_max: int = 4) -> Tuple[str, ...]:
+            top_k: int = 10, ptg_max_diff_top_k: float = 0.2, report_max: int = 4) -> Optional[Tuple[str, ...]]:
 
         wk_ent_ids = self.kg_embeddings.deduce_object(wk_ent_id, wk_prop_id, top_k, ptg_max_diff_top_k, report_max)
-        return tuple([self.get_entity_label(wk_ent_id) for wk_ent_id in wk_ent_ids])
+
+        if wk_ent_ids:
+            return tuple([self.get_entity_label(wk_ent_id) for wk_ent_id in wk_ent_ids])
+        else:
+            return None
 
     def recommend_similar_movies_and_characateristics(
             self, wk_ent_id_list: list,
@@ -205,9 +209,9 @@ class WikiDataKG(BasicKG):
                                       for closest_ent in closest_ents])
 
         # Then remove names that overlap with names of the input
-        ref_movie_str = set([self.entity_labels_dict[str(self.namespaces.WD[wk_ent_id])]
+        ref_movie_str = set([(self.entity_labels_dict[str(self.namespaces.WD[wk_ent_id])]).lower()
                              for wk_ent_id in wk_ent_id_list])
-        closest_movies_str_list = list(closest_movies_str_set - ref_movie_str)
+        closest_movies_str_list = [closest_movie for closest_movie in closest_movies_str_set if closest_movie.lower() not in ref_movie_str]
         closest_movies_str_list = closest_movies_str_list[0: min(num_movies_to_report, len(closest_movies_str_list))]
 
         return recs, closest_movies_str_list

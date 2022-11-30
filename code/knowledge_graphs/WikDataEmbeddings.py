@@ -1,6 +1,6 @@
 import os
 import csv
-from typing import Tuple
+from typing import Tuple, Optional
 
 import rdflib
 import numpy as np
@@ -31,25 +31,32 @@ class WikiDataEmbeddings:
         self.rel2id, self.id2rel = _load_id_mappers(relation_id_mapping)
 
     def deduce_object(self, wk_ent_id: str, wk_prop_id: str,
-                      top_k: int = 10, ptg_max_diff_top_k: float = 0.2, report_max: int = 4) -> Tuple[str, ...]:
+                      top_k: int = 10, ptg_max_diff_top_k: float = 0.2, report_max: int = 4) -> \
+            Optional[Tuple[str, ...]]:
+
         # Retrieve the embeddings of the corresponding elements
-        subj_emb = self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id]]]
-        pred_emb = self.relation_emb[self.rel2id[self.namespaces.WDT[wk_prop_id]]]
+        if self.namespaces.WD[wk_ent_id] in self.ent2id.keys() and \
+                self.namespaces.WDT[wk_prop_id] in self.rel2id.keys():
+            subj_emb = self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id]]]
+            pred_emb = self.relation_emb[self.rel2id[self.namespaces.WDT[wk_prop_id]]]
 
-        # Add vectors according to TransE scoring function.
-        pred_obj_emb = subj_emb + pred_emb
+            # Add vectors according to TransE scoring function.
+            pred_obj_emb = subj_emb + pred_emb
 
-        dist_top_k, top_k_emb_ids = self._return_most_similar_entites(embedding=pred_obj_emb, top_k=top_k)
+            dist_top_k, top_k_emb_ids = self._return_most_similar_entites(embedding=pred_obj_emb, top_k=top_k)
 
-        # Calculate difference in distance between 1 and 10th option.
-        # All those below 10% of that distance are included as the answer
-        large_dist = dist_top_k[-1] - dist_top_k[0]
-        plausible_objects = dist_top_k - dist_top_k[0] < ptg_max_diff_top_k * large_dist
+            # Calculate difference in distance between 1 and 10th option.
+            # All those below 10% of that distance are included as the answer
+            large_dist = dist_top_k[-1] - dist_top_k[0]
+            plausible_objects = dist_top_k - dist_top_k[0] < ptg_max_diff_top_k * large_dist
 
-        object_emb_id_to_report = top_k_emb_ids[plausible_objects]
-        object_emb_id_to_report = tuple(object_emb_id_to_report[:min(len(object_emb_id_to_report), report_max)])
+            object_emb_id_to_report = top_k_emb_ids[plausible_objects]
+            object_emb_id_to_report = tuple(object_emb_id_to_report[:min(len(object_emb_id_to_report), report_max)])
 
-        return object_emb_id_to_report
+            return object_emb_id_to_report
+
+        else:
+            return None
 
 
     def get_most_similar_entities_to_centroid(self, wk_ent_id_list: list, top_k: int = 10):

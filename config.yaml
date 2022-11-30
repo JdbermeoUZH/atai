@@ -9,7 +9,7 @@ conversation_config:
 
   entity_parser:
     model_size: 'trf'                                                         # 'sm', 'md', 'lg', 'trf'
-    wkprop_labels_filepath: '../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json'
+    wkprop_labels_filepath: '../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest_2.json'
 
   recommendations:
     rec_template_answer: '../setup_data/template_answers/recommendation_questions.json'
