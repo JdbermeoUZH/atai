@@ -1,0 +1,94 @@
+{
+    "one-hop": {
+        "P31": {
+            "label": "instance of",
+            "threshold": 0.6,
+            "exclude": [
+                "film"
+            ]
+        },
+        "P136": {
+            "label": "genre",
+            "threshold": 0.6,
+            "exclude": []
+        },
+        "P57": {
+            "label": "director",
+            "threshold": 0.3,
+            "exclude": []
+        },
+        "P3174": {
+            "label": "art director",
+            "threshold": 0.4,
+            "exclude": []
+        },
+        "P58": {
+            "label": "screenwriter",
+            "threshold": 0.3,
+            "exclude": []
+        },
+        "P161": {
+            "label": "cast member",
+            "threshold": 0.3,
+            "exclude": []
+        },
+        "P495": {
+            "label": "country of origin",
+            "threshold": 0.6,
+            "exclude": [
+                "United States of America"
+            ]
+        },
+        "P840": {
+            "label": "narrative location",
+            "threshold": 0.6,
+            "exclude": [
+                "United States of America"
+            ]
+        },
+        "P462": {
+            "label": "color",
+            "threshold": 0.3,
+            "exclude": [
+                "color"
+            ]
+        },
+        "P179": {
+            "label": "part of the series of",
+            "threshold": 0.5,
+            "exclude": []
+        },
+        "P921": {
+            "label": "main subject",
+            "threshold": 0.3,
+            "exclude": []
+        },
+        "P144": {
+            "label": "based on",
+            "threshold": 0.3,
+            "exclude": []
+        },
+        "P941": {
+            "label": "inspired by",
+            "threshold": 0.3,
+            "exclude": []
+        },
+        "P1877": {
+            "label": "after a work by",
+            "threshold": 0.3,
+            "exclude": []
+        }
+    },
+    "two-hop": {
+        "P144": {
+            "label": "based on",
+            "threshold": 0.4,
+            "exclude": []
+        },
+        "P941": {
+            "label": "inspired by",
+            "threshold": 0.4,
+            "exclude": []
+        }
+    }
+}

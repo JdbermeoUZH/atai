@@ -1,0 +1,65 @@
+{
+  "fact_question": [
+    "the {property} of {subject} is {object}",
+    "that one I know, the {property} of {subject} is {object}",
+    "got it, so the {property} of {subject} is {object}",
+    "so the {property} of {subject} is {object}"
+  ],
+  "fact_question_multiple_answers": [
+    "I think it's the following: The {property} of {subject} are {objects}",
+    "some or all of the next might be true: The {property} of {subject} are {objects}",
+    "so the {property} of {subject} might be the following: {objects}",
+    "the {property} of {subject} are: {objects}"
+  ],
+  "transition_to_crowdsourced_answer": [
+    "However let me verify if these answers are correct by going over multiple reports...",
+    "But let me check with another source of information",
+    "but let me double check that",
+    "I'll check other sources though"
+  ],
+  "error_fact_question": [
+    "Sorry, I do not fully get the question. Could you please rephrase it?",
+    "Sorry, I did not fully understand the question. Could you phrase in a more direct form?",
+    "hmm, I do not quite get the question. Could you phrase it more directly?",
+    "Could you rephrase it :)? (apologies, I am trying my best though)",
+    "hmm, still not working, could you be more specific and exact on the things you are asking about?"
+  ],
+  "error_too_many_questions_fact_question": [
+    "Apologies, but could you ask about a single thing at a time :)",
+    "Sorry, could you phrase the question more simply?",
+    "Sorry, I think you are referring to many things at the same time (it's harder for me to understand :)).\nCould you make the question simpler?",
+    "Hmm I did not get that, could you make the question simpler or more direct?"
+  ],
+  "embedding_question": [
+    "I am not 100%, but I think the {property} of {subject} might be one of the following: {objects}",
+    "I think the {property} of {subject} might be one of the following: {objects}",
+    "Don't quote me on this, but I think the {property} of {subject} might be one of these: {objects}",
+    "The {property} of {subject} might be one of these: {objects}",
+    "Don't know for sure, but maybe the {property} of {subject} is one of these: {objects}"
+  ],
+  "error_media_question": [
+    "I am sorry, I could not find the picture. Would you like to try phrasing it more directly (or with caps)",
+    "Ooops, I did not find the picture you asked for. Would you like to phrase it more directly?",
+    "I did not find, it, could you phrase it more directly?",
+    "I did not find, it, could you rephrase it?"
+  ],
+
+  "error_recommendation_question": [
+    "I am soryy, I do not know what to recommend in this case",
+    "Sorry! I could not find a solid recommendation for you"
+  ],
+
+  "overall_failure": [
+    "Sorry, I did not quite get that. Could you please rephrase it?",
+    "Apologies, I did not fully you request. Could phrase it differently?",
+    "I am sorry!, I did not get it. What do you mean again?",
+    "I am sorry!, could you say it in a different way?"
+  ],
+  "longer_wait": [
+    "hmmm let me think about it",
+    "give me a sec",
+    "Oh, let me check",
+    "Oh that's a hard one",
+    "Sorry, this will take me a bit longer to look up"
+  ]
+}

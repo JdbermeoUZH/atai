@@ -1,12 +1,11 @@
 import os
-import re
 import time
 import json
 import random
 
-from knowledge_graphs.WikiDataKG import WikiDataKG
-from models.EntityPropertyParser import EntityPropertyParser
-from models.InteractionTypeClassifier import InteractionTypeClassifier
+from knowledge_graphs.wikidata.WikiDataKG import WikiDataKG
+from models.entity_prop_parser.EntityPropertyParser import EntityPropertyParser
+from models.intent_classifier.InteractionTypeClassifier import InteractionTypeClassifier
 from demo_agent import DemoBot
 from regex_matchers.MediaQRegexMatcher import MediaQRegexMatcher
 from regex_matchers.FactQRegexMatcher import FactQRegexMatcher
@@ -192,17 +191,24 @@ class JuanitoBot(DemoBot):
                 property_id=wk_prop_id, property_label=property_label)
 
             if not answered:
+                # TODO: Check if property is in crowdsoruce dataset, otherwise, answer IDK or funnel to
                 print("Try to answer with crowd source or conversational model")
 
         # If there is a single object, we can query the objects label and answer the question directly
         elif len(answers) == 1:
-            answer_label = self.wkdata_kg.get_entity_label(answers[0])
-            aswer = self._sample_template_answer('fact_question').format(
+            answer = answers[0]
+
+            if answer.startswith('P') or answer.startswith('Q'):
+                answer_label = self.wkdata_kg.get_entity_label(answers[0])
+            else:
+                answer_label = answer
+
+            full_answer_str = self._sample_template_answer('fact_question').format(
                     property=property_label, subject=entity_label, object=answer_label)
 
             self.post_message(
                 room_id=room_id, session_token=self.session_token,
-                message=aswer.encode('utf-8'))
+                message=full_answer_str.encode('utf-8'))
 
         # If more than one entity is part of the answer, report it and double check on the crowdsourced dataset
         elif len(answers) > 1:
@@ -372,8 +378,8 @@ if __name__ == '__main__':
 
     # password = getpass.getpass('Password of the demo bot:')
     # bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
-    bot._respond_kg_question("What is the Harry Potter and The Goblet of Fire based on", "room_id")
     bot._respond_kg_question("What is the box office of The Matrix", "room_id")
+    bot._respond_kg_question("What is the Harry Potter and The Goblet of Fire based on", "room_id")
     bot._respond_kg_question("What is the box office of Princess and the Frog??", "room_id")
     bot._respond_kg_question("Who is the lead actor in Harry Potter and The Goblet of Fire?", "room_id")
 

@@ -1,0 +1,1006 @@
+{
+    "P106": [
+        "occupation"
+    ],
+    "P577": [
+        "publication date"
+    ],
+    "P19": [
+        "place of birth"
+    ],
+    "P69": [
+        "educated at"
+    ],
+    "P1412": [
+        "languages spoken, written or signed"
+    ],
+    "P161": [
+        "actor",
+        "actress",
+        "cast member",
+        "feat.",
+        "featuring",
+        "starring (film/play)",
+        "film starring",
+        "contestant of a play",
+        "starring"
+    ],
+    "P915": [
+        "film location",
+        "filming location",
+        "filmed at",
+        "place where filmed",
+        "location where filmed",
+        "filming location",
+        "place of filming",
+        "shooting location",
+        "studio where filmed",
+        "filmed on location in",
+        "location of filming",
+        "shot in",
+        "filmed in"
+    ],
+    "P144": [
+        "modeled after",
+        "themed after",
+        "inspired by",
+        "based on",
+        "replica of",
+        "remake of",
+        "based upon",
+        "adapted from",
+        "cover of",
+        "extended from",
+        "fork of",
+        "inherits from",
+        "modelled after",
+        "copy of",
+        "derivative of",
+        "derived from",
+        "theme",
+        "adaptation of",
+        "has parts from",
+        "parody of",
+        "derivative work of",
+        "source work",
+        "based on work"
+    ],
+    "P272": [
+        "studio",
+        "movie studio",
+        "produced by (company)",
+        "producer (company)",
+        "production house",
+        "production company",
+        "motion picture studio",
+        "film studio"
+    ],
+    "P57": [
+        "director",
+        "directed by",
+        "movie director",
+        "film director"
+    ],
+    "P551": [
+        "residence"
+    ],
+    "P27": [
+        "country of citizenship"
+    ],
+    "P1080": [
+        "from narrative universe"
+    ],
+    "P921": [
+        "topic of work",
+        "regards",
+        "regarding",
+        "primary topic",
+        "main thing",
+        "plot keyword",
+        "mainly about",
+        "subject",
+        "main issue",
+        "is about",
+        "has topic",
+        "primary subject",
+        "artistic theme",
+        "about",
+        "theme",
+        "topic",
+        "keyword",
+        "main topic",
+        "index term",
+        "subject heading",
+        "/common/topic/subject",
+        "content deals with",
+        "content describes",
+        "content is about",
+        "describes",
+        "has a subject",
+        "in regards to",
+        "sitter",
+        "main subject"
+    ],
+    "P345": [
+        "IMDb ID"
+    ],
+    "P136": [
+        "genre of literature",
+        "genre",
+        "genres",
+        "literary genre",
+        "genre of music",
+        "film genre",
+        "art style",
+        "kind of music",
+        "music genre",
+        "artistic genre",
+        "type of film",
+        "type of music"
+    ],
+    "P5970": [
+        "Medier\u00e5det rating"
+    ],
+    "P495": [
+        "origin country",
+        "CoO",
+        "place of origin",
+        "originates from",
+        "comes from",
+        "country of origin"
+    ],
+    "P1411": [
+        "have nomination to",
+        "nomination received",
+        "nomination to",
+        "nominee for",
+        "finalist for",
+        "selected for",
+        "shortlisted for",
+        "nominated for"
+    ],
+    "P1889": [
+        "distinguished from",
+        "do not confuse with",
+        "not to be confused with",
+        "not the same as",
+        "often confused with",
+        "rejected match",
+        "to be distinguished from",
+        "differs from",
+        "different from",
+        "not same as",
+        "confused with",
+        "is not",
+        "is different from",
+        "\u2260",
+        "not identical to",
+        "disambiguated from",
+        "not equal to",
+        "mistakenly taken for",
+        "isn't",
+        "distinct from"
+    ],
+    "P1040": [
+        "editor",
+        "edited by",
+        "film editor"
+    ],
+    "P462": [
+        "of the colour",
+        "color",
+        "with the color",
+        "colors",
+        "colours",
+        "colour",
+        "with the colour",
+        "pigment",
+        "dye",
+        "has the colour",
+        "has the color",
+        "of the color",
+        "has colour",
+        "has color"
+    ],
+    "P452": [
+        "industry"
+    ],
+    "P1441": [
+        "present in work"
+    ],
+    "P437": [
+        "distribution format"
+    ],
+    "P725": [
+        "voice actresses",
+        "voiced by",
+        "voice actor",
+        "voice actress",
+        "VA",
+        "CV",
+        "VO",
+        "voice dubber",
+        "dubbed by",
+        "vocal role as",
+        "voice actors",
+        "seiyu"
+    ],
+    "P5021": [
+        "assessment"
+    ],
+    "P509": [
+        "cause of death"
+    ],
+    "P800": [
+        "notable work"
+    ],
+    "P175": [
+        "performer"
+    ],
+    "P750": [
+        "distributor",
+        "distributed by"
+    ],
+    "P20": [
+        "place of death"
+    ],
+    "P26": [
+        "spouse"
+    ],
+    "P3834": [
+        "RTC film rating",
+        "RTC movie rating",
+        "RTC score"
+    ],
+    "P58": [
+        "screenwriter",
+        "scriptwriter",
+        "scenarist",
+        "film script by",
+        "screenplay by",
+        "writer (of screenplays)",
+        "writing credits",
+        "story by",
+        "written by",
+        "teleplay by"
+    ],
+    "P1343": [
+        "described by source"
+    ],
+    "P3174": [
+        "art director"
+    ],
+    "P449": [
+        "original broadcaster"
+    ],
+    "P364": [
+        "language",
+        "created on language",
+        "original language",
+        "original language of film or TV show",
+        "language of the original work"
+    ],
+    "P1038": [
+        "relative"
+    ],
+    "P344": [
+        "director of photography",
+        "cinematographer",
+        "DOP"
+    ],
+    "P159": [
+        "headquarters location"
+    ],
+    "P17": [
+        "country"
+    ],
+    "P1877": [
+        "inspiring artist",
+        "after a work by",
+        "inspirational artist",
+        "copy of a work by",
+        "artist who inspired this"
+    ],
+    "P166": [
+        "medals",
+        "honours",
+        "recognition title",
+        "awards",
+        "win",
+        "award received",
+        "honorary title",
+        "honors",
+        "winner of",
+        "award",
+        "awards received",
+        "awarded",
+        "award won",
+        "prize awarded",
+        "prize received"
+    ],
+    "P1657": [
+        "MPAA film rating",
+        "MPA film rating",
+        "Motion Picture Association of America film rating"
+    ],
+    "P840": [
+        "narrative location",
+        "set in",
+        "setting",
+        "narrative set in",
+        "playing in",
+        "setting location",
+        "takes place in",
+        "location of narrative",
+        "place of setting",
+        "place set in",
+        "setting of work",
+        "setting place",
+        "work set in",
+        "set in location"
+    ],
+    "P30": [
+        "continent"
+    ],
+    "P103": [
+        "native language"
+    ],
+    "P3650": [
+        "JMK film rating",
+        "JMK movie rating",
+        "JMK film score"
+    ],
+    "P1431": [
+        "showrunner",
+        "executive producer"
+    ],
+    "P361": [
+        "part of"
+    ],
+    "P170": [
+        "creator"
+    ],
+    "P607": [
+        "conflict"
+    ],
+    "P1346": [
+        "winner"
+    ],
+    "P172": [
+        "ethnic group"
+    ],
+    "P2142": [
+        "box office"
+    ],
+    "P276": [
+        "location"
+    ],
+    "P101": [
+        "field of work"
+    ],
+    "P21": [
+        "sex or gender"
+    ],
+    "P190": [
+        "twinned administrative body"
+    ],
+    "P1981": [
+        "FSK classification",
+        "classement de film FSK",
+        "FSK film rating",
+        "classification allemande"
+    ],
+    "P3373": [
+        "sibling"
+    ],
+    "P40": [
+        "child"
+    ],
+    "P767": [
+        "contributor to the creative work or subject"
+    ],
+    "P2747": [
+        "Filmiroda rating",
+        "Filmiroda film rating",
+        "Filmiroda movie rating"
+    ],
+    "P941": [
+        "inspired by"
+    ],
+    "P3092": [
+        "film crew member"
+    ],
+    "P1552": [
+        "parameter",
+        "characterized by",
+        "defined by",
+        "defining feature",
+        "defining parameter",
+        "has characteristic",
+        "requirement",
+        "has property",
+        "inherent property",
+        "required property",
+        "quality",
+        "trait",
+        "has feature",
+        "aspect",
+        "attribute",
+        "has quality"
+    ],
+    "P3402": [
+        "CNC film rating (Romania)"
+    ],
+    "P2061": [
+        "image aspect ratio",
+        "aspect ratio",
+        "aspect ratio (W:H)",
+        "ratio"
+    ],
+    "P1455": [
+        "list of works"
+    ],
+    "P931": [
+        "place served by transport hub"
+    ],
+    "P50": [
+        "author"
+    ],
+    "P674": [
+        "characters"
+    ],
+    "P150": [
+        "contains administrative territorial entity"
+    ],
+    "P2637": [
+        "RARS rating"
+    ],
+    "P641": [
+        "sport"
+    ],
+    "P108": [
+        "employer"
+    ],
+    "P155": [
+        "follows"
+    ],
+    "P179": [
+        "collection",
+        "part of series",
+        "series",
+        "part of the series",
+        "listed in",
+        "issue of"
+    ],
+    "P131": [
+        "located in the administrative territorial entity"
+    ],
+    "P6658": [
+        "RCQ",
+        "RCQ classification",
+        "R\u00e9gie du Cin\u00e9ma Qu\u00e9b\u00e9cois"
+    ],
+    "P47": [
+        "shares border with"
+    ],
+    "P527": [
+        "has part"
+    ],
+    "P2554": [
+        "production designer",
+        "scenic designer",
+        "scenic design by"
+    ],
+    "P5201": [
+        "IMDA classification",
+        "IMDA rating",
+        "IMDA score"
+    ],
+    "P1434": [
+        "takes place in fictional universe"
+    ],
+    "P451": [
+        "unmarried partner"
+    ],
+    "P2684": [
+        "Kijkwijzer rating"
+    ],
+    "P275": [
+        "copyright license"
+    ],
+    "P22": [
+        "father"
+    ],
+    "P138": [
+        "named after"
+    ],
+    "P3216": [
+        "ClassInd rating"
+    ],
+    "P6942": [
+        "animator"
+    ],
+    "P140": [
+        "religion"
+    ],
+    "P7573": [
+        "IFCO rating"
+    ],
+    "P2515": [
+        "costume designer",
+        "designer of costumes"
+    ],
+    "P1344": [
+        "participant in"
+    ],
+    "P407": [
+        "language of work or name"
+    ],
+    "P2363": [
+        "NMHH movie rating",
+        "NMHH film rating"
+    ],
+    "P112": [
+        "founded by"
+    ],
+    "P749": [
+        "parent organization"
+    ],
+    "P156": [
+        "followed by"
+    ],
+    "P4969": [
+        "derivative work"
+    ],
+    "P5096": [
+        "member of the crew of"
+    ],
+    "P6216": [
+        "copyright status",
+        "copyright restriction"
+    ],
+    "P2758": [
+        "CNC rating",
+        "CNC movie rating",
+        "Commission de classification des \u0153uvres cin\u00e9matographiques film rating",
+        "film classification category (CNC)",
+        "CNC film rating",
+        "CNC film rating (France)"
+    ],
+    "P463": [
+        "member of"
+    ],
+    "P1433": [
+        "published in"
+    ],
+    "P2408": [
+        "set during",
+        "period",
+        "era",
+        "era set in",
+        "significant event",
+        "set in",
+        "set in period",
+        "set in era",
+        "period set in",
+        "set in time",
+        "period of setting",
+        "period covered",
+        "era of setting",
+        "setting",
+        "time period",
+        "time period of setting",
+        "narrative time",
+        "time period set in",
+        "narrative period",
+        "features event",
+        "takes place in time"
+    ],
+    "P3306": [
+        "ICAA rating"
+    ],
+    "P9215": [
+        "set during recurring event"
+    ],
+    "P2936": [
+        "language used"
+    ],
+    "P135": [
+        "movement"
+    ],
+    "P2348": [
+        "time period"
+    ],
+    "P37": [
+        "official language"
+    ],
+    "P710": [
+        "participant"
+    ],
+    "P195": [
+        "collection"
+    ],
+    "P740": [
+        "location of formation"
+    ],
+    "P1445": [
+        "fictional universe described in"
+    ],
+    "P937": [
+        "work location"
+    ],
+    "P3803": [
+        "original film format"
+    ],
+    "P1196": [
+        "manner of death"
+    ],
+    "P400": [
+        "platform"
+    ],
+    "P6886": [
+        "writing language"
+    ],
+    "P735": [
+        "given name"
+    ],
+    "P6166": [
+        "quotes work"
+    ],
+    "P8345": [
+        "media franchise"
+    ],
+    "P6379": [
+        "has works in the collection"
+    ],
+    "P2563": [
+        "superhuman feature or ability"
+    ],
+    "P91": [
+        "sexual orientation"
+    ],
+    "P1399": [
+        "convicted of"
+    ],
+    "P2629": [
+        "BBFC rating"
+    ],
+    "P2756": [
+        "EIRIN film rating",
+        "EIRIN film rating category"
+    ],
+    "P2079": [
+        "fabrication method"
+    ],
+    "P1416": [
+        "affiliation"
+    ],
+    "P8874": [
+        "Hong Kong film rating"
+    ],
+    "P1542": [
+        "has effect"
+    ],
+    "P1830": [
+        "owner of"
+    ],
+    "P828": [
+        "has cause"
+    ],
+    "P7937": [
+        "form of creative work"
+    ],
+    "P1875": [
+        "represented by"
+    ],
+    "P793": [
+        "big event",
+        "significant event",
+        "event",
+        "outcome",
+        "fate",
+        "notable incident",
+        "known for",
+        "important event",
+        "key incident",
+        "main events",
+        "major event",
+        "key event",
+        "sign. event",
+        "significant achievment",
+        "significant incident",
+        "notable event"
+    ],
+    "P119": [
+        "place of burial"
+    ],
+    "P8371": [
+        "references work, tradition or theory"
+    ],
+    "P2341": [
+        "indigenous to"
+    ],
+    "P1366": [
+        "replaced by"
+    ],
+    "P4805": [
+        "make-up artist"
+    ],
+    "P157": [
+        "killed by"
+    ],
+    "P1056": [
+        "product or material produced"
+    ],
+    "P127": [
+        "owned by"
+    ],
+    "P1376": [
+        "capital of"
+    ],
+    "P2438": [
+        "narrated by",
+        "narrator"
+    ],
+    "P2650": [
+        "interested in"
+    ],
+    "P25": [
+        "mother"
+    ],
+    "P3156": [
+        "Australian Classification"
+    ],
+    "P1050": [
+        "medical condition"
+    ],
+    "P2546": [
+        "sidekick of"
+    ],
+    "P180": [
+        "depicts"
+    ],
+    "P1299": [
+        "depicted by"
+    ],
+    "P4437": [
+        "FPB rating",
+        "FPB score"
+    ],
+    "P5150": [
+        "IGAC rating",
+        "IGAC score"
+    ],
+    "P3842": [
+        "located in present-day administrative territorial entity"
+    ],
+    "P737": [
+        "influenced by"
+    ],
+    "P3342": [
+        "significant person"
+    ],
+    "P366": [
+        "use"
+    ],
+    "P1066": [
+        "student of"
+    ],
+    "P8889": [
+        "MTRCB rating"
+    ],
+    "P123": [
+        "publisher"
+    ],
+    "P706": [
+        "located on terrain feature"
+    ],
+    "P4584": [
+        "first appearance"
+    ],
+    "P1589": [
+        "lowest point"
+    ],
+    "P1429": [
+        "has pet"
+    ],
+    "P747": [
+        "has edition or translation"
+    ],
+    "P97": [
+        "noble title"
+    ],
+    "P1269": [
+        "facet of"
+    ],
+    "P5028": [
+        "sound designer"
+    ],
+    "P5072": [
+        "presented in",
+        "held at meeting",
+        "screened at"
+    ],
+    "P5940": [
+        "plot expanded in"
+    ],
+    "P2632": [
+        "place of detention"
+    ],
+    "P291": [
+        "place of publication"
+    ],
+    "P3275": [
+        "storyboard artist"
+    ],
+    "P6": [
+        "head of government"
+    ],
+    "P8411": [
+        "set in environment"
+    ],
+    "P7047": [
+        "enemy of"
+    ],
+    "P2283": [
+        "uses"
+    ],
+    "P9086": [
+        "BAMID film rating"
+    ],
+    "P802": [
+        "student"
+    ],
+    "P241": [
+        "military branch"
+    ],
+    "P3300": [
+        "musical conductor"
+    ],
+    "P7936": [
+        "business model"
+    ],
+    "P1327": [
+        "partner in business or sport"
+    ],
+    "P54": [
+        "member of sports team"
+    ],
+    "P3428": [
+        "CAEC film rating",
+        "INCAA film rating",
+        "INCAA movie rating",
+        "INCAA movie score"
+    ],
+    "P1029": [
+        "crew member(s)"
+    ],
+    "P2541": [
+        "operating area"
+    ],
+    "P8670": [
+        "character designer"
+    ],
+    "P1037": [
+        "director / manager"
+    ],
+    "P178": [
+        "developer"
+    ],
+    "P6962": [
+        "narrative motif"
+    ],
+    "P5152": [
+        "KAVI rating",
+        "KAVI score"
+    ],
+    "P1809": [
+        "choreographer"
+    ],
+    "P1027": [
+        "conferred by"
+    ],
+    "P4608": [
+        "scenographer"
+    ],
+    "P1165": [
+        "home world"
+    ],
+    "P629": [
+        "edition or translation of"
+    ],
+    "P287": [
+        "designed by"
+    ],
+    "P460": [
+        "said to be the same as"
+    ],
+    "P7327": [
+        "OFLC classification"
+    ],
+    "P4908": [
+        "season"
+    ],
+    "P3301": [
+        "broadcast by"
+    ],
+    "P825": [
+        "dedicated to"
+    ],
+    "P3818": [
+        "KMRB film rating",
+        "KMRB movie rating",
+        "KMRB score"
+    ],
+    "P1576": [
+        "lifestyle"
+    ],
+    "P2860": [
+        "cites work"
+    ],
+    "P5389": [
+        "permanent resident of"
+    ],
+    "P137": [
+        "operator"
+    ],
+    "P3448": [
+        "stepparent"
+    ],
+    "P66": [
+        "ancestral home"
+    ],
+    "P306": [
+        "operating system"
+    ],
+    "P371": [
+        "presenter"
+    ],
+    "P2416": [
+        "sports discipline competed in"
+    ],
+    "P6275": [
+        "copyright representative"
+    ],
+    "P485": [
+        "archives at"
+    ],
+    "P3931": [
+        "copyright holder"
+    ],
+    "P3095": [
+        "practiced by"
+    ],
+    "P466": [
+        "occupant"
+    ],
+    "P425": [
+        "field of this occupation"
+    ],
+    "P1142": [
+        "political ideology"
+    ],
+    "P263": [
+        "official residence"
+    ],
+    "P1382": [
+        "partially coincident with"
+    ],
+    "P2360": [
+        "target audience",
+        "created for",
+        "intended for",
+        "serving",
+        "intended audience",
+        "for market",
+        "for audience of",
+        "designed for",
+        "user group",
+        "target market",
+        "target group",
+        "intended public",
+        "target demographic",
+        "audience of",
+        "made for"
+    ]
+}

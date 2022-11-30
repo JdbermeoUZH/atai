@@ -1,0 +1,452 @@
+{
+    "P1040": [
+        "editor",
+        "edited by",
+        "film editor"
+    ],
+    "P136": [
+        "genre of literature",
+        "genre",
+        "genres",
+        "literary genre",
+        "genre of music",
+        "film genre",
+        "art style",
+        "kind of music",
+        "music genre",
+        "artistic genre",
+        "type of film",
+        "type of music"
+    ],
+    "P1411": [
+        "have nomination to",
+        "nomination received",
+        "nomination to",
+        "nominee for",
+        "finalist for",
+        "selected for",
+        "shortlisted for",
+        "nominated for"
+    ],
+    "P1431": [
+        "showrunner",
+        "executive producer"
+    ],
+    "P144": [
+        "modeled after",
+        "themed after",
+        "inspired by",
+        "based on",
+        "replica of",
+        "remake of",
+        "based upon",
+        "adapted from",
+        "cover of",
+        "extended from",
+        "fork of",
+        "inherits from",
+        "modelled after",
+        "copy of",
+        "derivative of",
+        "derived from",
+        "theme",
+        "adaptation of",
+        "has parts from",
+        "parody of",
+        "derivative work of",
+        "source work",
+        "based on work"
+    ],
+    "P1552": [
+        "parameter",
+        "characterized by",
+        "defined by",
+        "defining feature",
+        "defining parameter",
+        "has characteristic",
+        "requirement",
+        "has property",
+        "inherent property",
+        "required property",
+        "quality",
+        "trait",
+        "has feature",
+        "aspect",
+        "attribute",
+        "has quality"
+    ],
+    "P161": [
+        "actor",
+        "actress",
+        "cast member",
+        "feat.",
+        "featuring",
+        "starring (film/play)",
+        "film starring",
+        "contestant of a play",
+        "starring"
+    ],
+    "P1657": [
+        "MPAA film rating",
+        "MPA film rating",
+        "Motion Picture Association of America film rating"
+    ],
+    "P166": [
+        "medals",
+        "honours",
+        "recognition title",
+        "awards",
+        "win",
+        "award received",
+        "honorary title",
+        "honors",
+        "winner of",
+        "award",
+        "awards received",
+        "awarded",
+        "award won",
+        "prize awarded",
+        "prize received"
+    ],
+    "P179": [
+        "collection",
+        "part of series",
+        "series",
+        "part of the series",
+        "listed in",
+        "issue of"
+    ],
+    "P1877": [
+        "inspiring artist",
+        "after a work by",
+        "inspirational artist",
+        "copy of a work by",
+        "artist who inspired this"
+    ],
+    "P1889": [
+        "distinguished from",
+        "do not confuse with",
+        "not to be confused with",
+        "not the same as",
+        "often confused with",
+        "rejected match",
+        "to be distinguished from",
+        "differs from",
+        "different from",
+        "not same as",
+        "confused with",
+        "is not",
+        "is different from",
+        "\u2260",
+        "not identical to",
+        "disambiguated from",
+        "not equal to",
+        "mistakenly taken for",
+        "isn't",
+        "distinct from"
+    ],
+    "P1981": [
+        "FSK classification",
+        "classement de film FSK",
+        "FSK film rating",
+        "classification allemande"
+    ],
+    "P2061": [
+        "image aspect ratio",
+        "aspect ratio",
+        "aspect ratio (W:H)",
+        "ratio"
+    ],
+    "P2360": [
+        "target audience",
+        "created for",
+        "intended for",
+        "serving",
+        "intended audience",
+        "for market",
+        "for audience of",
+        "designed for",
+        "user group",
+        "target market",
+        "target group",
+        "intended public",
+        "target demographic",
+        "audience of",
+        "made for"
+    ],
+    "P2363": [
+        "NMHH movie rating",
+        "NMHH film rating"
+    ],
+    "P2408": [
+        "set during",
+        "period",
+        "era",
+        "era set in",
+        "significant event",
+        "set in",
+        "set in period",
+        "set in era",
+        "period set in",
+        "set in time",
+        "period of setting",
+        "period covered",
+        "era of setting",
+        "setting",
+        "time period",
+        "time period of setting",
+        "narrative time",
+        "time period set in",
+        "narrative period",
+        "features event",
+        "takes place in time"
+    ],
+    "P2438": [
+        "narrated by",
+        "narrator"
+    ],
+    "P2515": [
+        "costume designer",
+        "designer of costumes"
+    ],
+    "P2554": [
+        "production designer",
+        "scenic designer",
+        "scenic design by"
+    ],
+    "P272": [
+        "studio",
+        "movie studio",
+        "produced by (company)",
+        "producer (company)",
+        "production house",
+        "production company",
+        "motion picture studio",
+        "film studio"
+    ],
+    "P2747": [
+        "Filmiroda rating",
+        "Filmiroda film rating",
+        "Filmiroda movie rating"
+    ],
+    "P2756": [
+        "EIRIN film rating",
+        "EIRIN film rating category"
+    ],
+    "P2758": [
+        "CNC rating",
+        "CNC movie rating",
+        "Commission de classification des \u0153uvres cin\u00e9matographiques film rating",
+        "film classification category (CNC)",
+        "CNC film rating",
+        "CNC film rating (France)"
+    ],
+    "P3428": [
+        "CAEC film rating",
+        "INCAA film rating",
+        "INCAA movie rating",
+        "INCAA movie score"
+
+    ],
+    "P344": [
+        "director of photography",
+        "cinematographer",
+        "DOP"
+    ],
+    "P364": [
+        "language",
+        "created on language",
+        "original language",
+        "original language of film or TV show",
+        "language of the original work"
+    ],
+    "P3650": [
+        "JMK film rating",
+        "JMK movie rating",
+        "JMK film score"
+    ],
+    "P3818": [
+        "KMRB film rating",
+        "KMRB movie rating",
+        "KMRB score"
+    ],
+    "P3834": [
+        "RTC film rating",
+        "RTC movie rating",
+        "RTC score"
+    ],
+    "P4437": [
+        "FPB rating",
+        "FPB score"
+    ],
+    "P462": [
+        "of the colour",
+        "color",
+        "with the color",
+        "colors",
+        "colours",
+        "colour",
+        "with the colour",
+        "pigment",
+        "dye",
+        "has the colour",
+        "has the color",
+        "of the color",
+        "has colour",
+        "has color"
+    ],
+    "P495": [
+        "origin country",
+        "CoO",
+        "place of origin",
+        "originates from",
+        "comes from",
+        "country of origin"
+    ],
+    "P5028": [
+        "sound designer"
+    ],
+    "P5072": [
+        "presented in",
+        "held at meeting",
+        "screened at"
+    ],
+    "P5150": [
+        "IGAC rating",
+        "IGAC score"
+    ],
+    "P5152": [
+        "KAVI rating",
+        "KAVI score"
+    ],
+    "P5201": [
+        "IMDA classification",
+        "IMDA rating",
+        "IMDA score"
+    ],
+    "P57": [
+        "director",
+        "directed by",
+        "movie director",
+        "film director"
+    ],
+    "P58": [
+        "screenwriter",
+        "scriptwriter",
+        "scenarist",
+        "film script by",
+        "screenplay by",
+        "writer (of screenplays)",
+        "writing credits",
+        "story by",
+        "written by",
+        "teleplay by"
+    ],
+    "P6216": [
+        "copyright status",
+        "copyright restriction"
+    ],
+    "P6658": [
+        "RCQ",
+        "RCQ classification",
+        "R\u00e9gie du Cin\u00e9ma Qu\u00e9b\u00e9cois"
+    ],
+    "P725": [
+        "voice actresses",
+        "voiced by",
+        "voice actor",
+        "voice actress",
+        "VA",
+        "CV",
+        "VO",
+        "voice dubber",
+        "dubbed by",
+        "vocal role as",
+        "voice actors",
+        "seiyu"
+    ],
+    "P750": [
+        "distributor",
+        "distributed by"
+    ],
+    "P793": [
+        "big event",
+        "significant event",
+        "event",
+        "outcome",
+        "fate",
+        "notable incident",
+        "known for",
+        "important event",
+        "key incident",
+        "main events",
+        "major event",
+        "key event",
+        "sign. event",
+        "significant achievment",
+        "significant incident",
+        "notable event"
+    ],
+    "P840": [
+        "narrative location",
+        "set in",
+        "setting",
+        "narrative set in",
+        "playing in",
+        "setting location",
+        "takes place in",
+        "location of narrative",
+        "place of setting",
+        "place set in",
+        "setting of work",
+        "setting place",
+        "work set in",
+        "set in location"
+    ],
+    "P915": [
+        "film location",
+        "filming location",
+        "filmed at",
+        "place where filmed",
+        "location where filmed",
+        "filming location",
+        "place of filming",
+        "shooting location",
+        "studio where filmed",
+        "filmed on location in",
+        "location of filming",
+        "shot in",
+        "filmed in"
+    ],
+    "P921": [
+        "topic of work",
+        "regards",
+        "regarding",
+        "primary topic",
+        "main thing",
+        "plot keyword",
+        "mainly about",
+        "subject",
+        "main issue",
+        "is about",
+        "has topic",
+        "primary subject",
+        "artistic theme",
+        "about",
+        "theme",
+        "topic",
+        "keyword",
+        "main topic",
+        "index term",
+        "subject heading",
+        "/common/topic/subject",
+        "content deals with",
+        "content describes",
+        "content is about",
+        "describes",
+        "has a subject",
+        "in regards to",
+        "sitter",
+        "main subject"
+    ]
+}
