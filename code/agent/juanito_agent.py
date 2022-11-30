@@ -133,12 +133,17 @@ class JuanitoBot(DemoBot):
                 wkdata_ents.append(
                     self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text, ent_type='person'))
 
+        # Filter matched entities so far
+        wkdata_ents = [wkdata_ent for wkdata_ent in wkdata_ents if
+                       self.wkdata_kg.check_in_entity_movie_or_person(wkdata_ent)]
+
         if len(wkdata_ents) == 1:
             wk_ent_id = wkdata_ents[0]
 
         elif len(wkdata_ents) > 1:
             self.post_message(room_id=room_id, session_token=self.session_token,
                               message=self._sample_template_answer('error_too_many_questions_fact_question'))
+            return
 
         # Use regex pattern to match predicate and entity (works for simple patterns)
         if wk_prop_id is None or wk_ent_id is None:
@@ -186,11 +191,12 @@ class JuanitoBot(DemoBot):
         # If there is a single object, we can query the objects label and answer the question directly
         elif len(answers) == 1:
             answer_label = self.wkdata_kg.get_entity_label(answers[0])
+            aswer = self._sample_template_answer('fact_question').format(
+                    property=property_label, subject=entity_label, object=answer_label)
 
             self.post_message(
                 room_id=room_id, session_token=self.session_token,
-                message=self._sample_template_answer('fact_question').format(
-                    property=property_label, subject=entity_label, object=answer_label))
+                message=aswer.encode('utf-8'))
 
         # If more than one entity is part of the answer, report it and double check on the crowdsourced dataset
         elif len(answers) > 1:
@@ -357,15 +363,10 @@ if __name__ == '__main__':
 
     # password = getpass.getpass('Password of the demo bot:')
     # bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
-    # bot._respond_kg_question("Who directed the godfather", 'roomid')
-    # bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
     bot._respond_with_recommendation("Recommend movies like Nightmare on Elm Street, Friday the 13th and Halloween", 'roomid')
     bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "room_id")
-    bot._respond_kg_question("Who is the director of Star Wars: Episode VI - Return of the Jedi?", "room_id")
-    #bot._respond_kg_question("I bet you have no clue about by whom was the godfather directed", 'roomid')
 
     bot.first_funnel_filter("Recommend movies like Nightmare on Elm Street, Friday the 13th and Halloween")
-
 
     reconnection_listening_attempts = 0
 

@@ -77,14 +77,26 @@ LIMIT 1
 person_or_film_lowercase_label_match = """
 prefix wdt: <http://www.wikidata.org/prop/direct/>
 prefix wd: <http://www.wikidata.org/entity/>
-SELECT ?item ?label 
+SELECT DISTINCT ?item ?label 
 WHERE {{
         ?item rdfs:label ?label .
         {{ ?item wdt:P31 wd:Q11424}}
         UNION
         {{ ?item wdt:P31 wd:Q5}}
         UNION
+        {{ ?item wdt:P31 wd:Q24862}}
+        UNION
+        {{ ?item wdt:P31 wd:Q506240}}
+        UNION
+        {{ ?item wdt:P31 wd:Q336144}}
+        UNION
         {{ ?item wdt:P31 wd:Q20650540}}
+        UNION
+        {{ ?item wdt:P31 wd:Q759853}}
+        UNION
+        {{ ?item wdt:P31 wd:Q110900120}}
+        UNION
+        {{ ?item wdt:P279 wd:Q11424}}
         UNION
         {{ ?item wdt:P279 wd:Q202866}}
         UNION
@@ -93,6 +105,8 @@ WHERE {{
         {{ ?item wdt:P279 wd:Q29168811}}
         UNION
         {{ ?item wdt:P279 wd:Q17517379}}
+        UNION
+        {{ ?item wdt:P279 wd:Q110900120}}
         FILTER (LCASE(STR(?label)) = '{}')
         FILTER(LANG(?label) = "en")
 }}

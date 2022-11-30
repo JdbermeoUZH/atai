@@ -46,6 +46,12 @@ class WikiDataKG(BasicKG):
     def check_if_property_in_kg(self, wk_prop_id: str) -> bool:
         return str(self.namespaces.WDT[wk_prop_id]) in self.property_labels_dict.keys()
 
+    def check_in_entity_movie_or_person(self, wk_ent_id: str) -> bool:
+        relevant_instace_of_ents = ('Q11424', 'Q5', 'Q24862', 'Q506240', 'Q336144',
+                                    'Q20650540', 'Q759853', 'Q110900120')
+        return any([(self.namespaces.WD[wk_ent_id], self.namespaces.WDT.P31, self.namespaces.WD[obj]) in self.kg
+                    for obj in relevant_instace_of_ents])
+
     def get_object_or_objects(self, wk_ent_id: str, wk_prop_id: str) -> list:
         return [obj for obj in self.kg.objects(self.namespaces.WD.wk_ent_id, self.namespaces.WDT.wk_prop_id)]
 
@@ -74,21 +80,27 @@ class WikiDataKG(BasicKG):
     def get_wkdata_entid_based_on_label_match(self, entity_string_to_match: str, ent_type: Optional[str] = None) \
             -> Optional[str]:
         wk_ent_id = None
+        query = None
         query_result = []
         entity_string_to_match = entity_string_to_match.lower()
 
         # First try exact lower case match with SPARQL
         if ent_type is None:
-            query_result = self.kg.query(
-                wikidata_queries.exact_lowercase_label_match.format(entity_string_to_match))
+            query = wikidata_queries.exact_lowercase_label_match
 
         elif ent_type == 'person':
-            query_result = self.kg.query(
-                wikidata_queries.person_exact_lowercase_label_match.format(entity_string_to_match))
+            query = wikidata_queries.person_exact_lowercase_label_match
 
         elif ent_type == 'person or movie':
+            query = wikidata_queries.person_or_film_lowercase_label_match
+
+        query_result = self.kg.query(query.format(entity_string_to_match))
+
+        # If search failed, i.e: no items in the queries result, try cleaning the string
+        if len([str(wk_ent_id) for wk_ent_id, _ in query_result]) == 0:
+            entity_string_to_match = entity_string_to_match.strip('?')
             query_result = self.kg.query(
-                wikidata_queries.person_or_film_lowercase_label_match.format(entity_string_to_match))
+                query.format(entity_string_to_match))
 
         detected_wk_entities = [str(wk_ent_id) for wk_ent_id, _ in query_result]
 
@@ -100,23 +112,25 @@ class WikiDataKG(BasicKG):
             matches = np.array(
                 [(os.path.basename(wk_id), fuzz.token_sort_ratio(entity_string_to_match, label))
                  for wk_id, label in self.entity_labels_dict.items()
-                 if fuzz.token_sort_ratio(entity_string_to_match, label) > 75],
+                 if fuzz.token_sort_ratio(entity_string_to_match, label) > 75]
             )
 
             if matches.shape[0] > 0:
-                wk_ent_id = matches[matches[:, 1].argmax(), 0]
+                wk_ent_id = matches[matches[:, 1].astype(float).argmax(), 0]
 
         return wk_ent_id
 
     def get_wkdata_propid_based_on_label_match(self, property_str: str) -> Optional[str]:
         # Try matching the entity based on the edit distance
         matches = np.array(
-            [wk_id for wk_id, label_list in self._property_extended_label_set.items()
-             if any([fuzz.token_sort_ratio(property_str, label) > 75 for label in label_list])],
+            [(wk_id, max([fuzz.token_sort_ratio(property_str, label) for label in label_list]))
+             for wk_id, label_list in self._property_extended_label_set.items()
+             if any([fuzz.token_sort_ratio(property_str, label) > 75 for label in label_list])
+             ]
         )
 
         if len(matches) > 0:
-            return matches[matches.argmax()]
+            return matches[matches[:, 1].astype(float).argmax(), 0]
         else:
             return None
 
@@ -238,7 +252,7 @@ if __name__ == '__main__':
     assert kg.imdb2movienet['nm0000770']
 
     assert kg.get_wkdata_entid_based_on_label_match('Martin Scorsese') == 'Q41148'
-    print(kg._recommend_similar_movies_and_characateristics(['Q179673', 'Q36479', 'Q218894']))
+    print(kg.recommend_similar_movies_and_characateristics(['Q179673', 'Q36479', 'Q218894']))
     assert kg.get_wkdata_entid_based_on_label_match('Martin Scorsese', ent_type='person') == 'Q41148'
     assert kg.get_wkdata_entid_based_on_label_match('Martin Scorssese') == 'Q41148'
 
