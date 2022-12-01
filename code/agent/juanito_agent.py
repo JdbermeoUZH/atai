@@ -28,7 +28,8 @@ class JuanitoBot(DemoBot):
         self.first_funnel_filter = InteractionTypeClassifier(
             train_examples_path=first_funnel_config['classifier_train_data'])
         self.entityParser = EntityPropertyParser(
-            property_extended_label_filepath=conversation_params['entity_parser']['wkprop_labels_filepath'],
+            entity_exact_label_filepath=conversation_params['entity_parser']['match_ent_labels_filepath'],
+            property_extended_label_filepath=conversation_params['entity_parser']['match_prop_labels_filepath'],
             model_type=conversation_params['entity_parser']['model_size'])
 
         self.wkdata_kg = WikiDataKG(
@@ -36,7 +37,7 @@ class JuanitoBot(DemoBot):
             imdb2movienet_filepath=wk_kg_params['imdb2movinet_filepath'],
             entity_label_filepath=wk_kg_params['entity_labels_dict'],
             property_label_filepath=wk_kg_params['property_labels_dict'],
-            property_extended_label_filepath=conversation_params['entity_parser']['wkprop_labels_filepath'],
+            property_extended_label_filepath=conversation_params['entity_parser']['match_prop_labels_filepath'],
             entity_emb_filepath=wk_kg_params['embeddings']['entity_emb_filepath'],
             entity_id_mapping=wk_kg_params['embeddings']['entity_id_mapping'],
             relation_emb=wk_kg_params['embeddings']['relation_emb'],
@@ -119,12 +120,9 @@ class JuanitoBot(DemoBot):
         if len(wk_prop_ids) == 1:
             wk_prop_id = wk_prop_ids[0]
 
-        # TODO: Use a phrasematcher for exact movie titles
-
         # Use spacy entity linkers to identify entities
-        _, spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities(
+        spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
             doc=message, entities_of_interest=("PERSON", "WORK_OF_ART"))
-        wkdata_ents = list(wkdata_ents.keys())
 
         # If no entities were detected, then try to identify them via named entities detected
         if len(wkdata_ents) == 0 and len(spacy_ents) > 0:
@@ -253,7 +251,7 @@ class JuanitoBot(DemoBot):
 
     def _respond_media_request(self, message: str, room_id: str):
         # Use entity linker to find named entities of interest and their respective wikidata ids
-        spacy_proc_doc, spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities(
+        spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
             message, entities_of_interest=('PERSON',))
 
         # Try to get imdb_id of PERSON entities successfully linked to wikidata
@@ -277,7 +275,7 @@ class JuanitoBot(DemoBot):
 
         # If still no imdb ids where found, use regex patterns to extract relevant text and match to a KG entity label
         if len(imdb_ids) == 0:
-            extracted_str = self._media_q_regex_matcher.match_string(spacy_proc_doc.text)
+            extracted_str = self._media_q_regex_matcher.match_string(message)
             wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str, ent_type='person') \
                 if extracted_str else None
             imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=wk_ent_id) if wk_ent_id else None
@@ -307,7 +305,7 @@ class JuanitoBot(DemoBot):
     def _respond_with_recommendation(self, message: str, room_id: str):
         movie_wk_ent_id = []
         # Use entity linker to find named entities of interest and their respective wikidata ids
-        spacy_proc_doc, spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities(
+        spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
             message, entities_of_interest=("WORK_OF_ART", ))
         movie_wk_ent_id += list(wkdata_ents.keys())
 
@@ -378,8 +376,6 @@ if __name__ == '__main__':
 
     # password = getpass.getpass('Password of the demo bot:')
     # bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
-    bot._respond_kg_question("What is the box office of The Matrix", "room_id")
-    bot._respond_kg_question("What is the Harry Potter and The Goblet of Fire based on", "room_id")
     bot._respond_kg_question("What is the box office of Princess and the Frog??", "room_id")
     bot._respond_kg_question("Who is the lead actor in Harry Potter and The Goblet of Fire?", "room_id")
 

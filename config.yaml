@@ -3,32 +3,33 @@ chatroom_server:
 
 conversation_config:
   listen_freq: 5                                                              # How long to wait after giving a response
-  template_answer: '../setup_data/template_answers/template_answers.json'                       # Json file with template answers
+  template_answer: './agent/template_answers/template_answers.json'                       # Json file with template answers
   first_funnel_info:
-    classifier_train_data: '../setup_data/first_filter_train_examples.json'
+    classifier_train_data: './models/intent_classifier/first_filter_train_examples.json'
 
   entity_parser:
     model_size: 'trf'                                                         # 'sm', 'md', 'lg', 'trf'
-    wkprop_labels_filepath: '../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest_2.json'
+    match_ent_labels_filepath: './models/entity_prop_parser/wk_data_names_ents_of_interest.json'
+    match_prop_labels_filepath: './models/entity_prop_parser/wk_data_names_props_of_interest_2.json'
 
   recommendations:
-    rec_template_answer: '../setup_data/template_answers/recommendation_questions.json'
+    rec_template_answer: './agent/template_answers/recommendation_questions.json'
 
   knowledge_graphs:
     wikidata:
       kg_filepath: '../setup_data/wikidata_kg/14_graph.nt'
-      imdb2movinet_filepath: '../setup_data/wikidata_kg/id_mappings/imdb2movienet.json'
-      entity_labels_dict: '../setup_data/wikidata_kg/id_labels/wkdata_entity_labels_dict.json'
-      property_labels_dict: '../setup_data/wikidata_kg/id_labels/wkdata_property_labels_dict.json'
+      imdb2movinet_filepath: './knowledge_graphs/wikidata/id_mappings/imdb2movienet.json'
+      entity_labels_dict: './knowledge_graphs/wikidata/wkdata_entity_labels_dict.json'
+      property_labels_dict: './knowledge_graphs/wikidata/wkdata_property_labels_dict.json'
 
       embeddings:
         entity_emb_filepath: '../setup_data/wikidata_kg/embeddings/entity_embeds.npy'
-        entity_id_mapping: '../setup_data/wikidata_kg/embeddings/entity_ids.del'
+        entity_id_mapping: './knowledge_graphs/wikidata/embeddings/entity_ids.del'
         relation_emb: '../setup_data/wikidata_kg/embeddings/relation_embeds.npy'
-        relation_id_mapping: '../setup_data/wikidata_kg/embeddings/relation_ids.del'
+        relation_id_mapping: './knowledge_graphs/wikidata/embeddings/relation_ids.del'
 
       recommendations:
-        rec_rules_filepath: '../setup_data/wikidata_kg/recommendation/rec_rules.json'
+        rec_rules_filepath: './knowledge_graphs/wikidata//recommendation/rec_rules.json'
 
     crowd_sourcing:
       kg_filepath: '../setup_data/14_graph.tsv'

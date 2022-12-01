@@ -1,7 +1,9 @@
 import json
+import os
 from typing import Tuple
 
 import spacy
+import numpy as np
 from spacy.matcher import PhraseMatcher
 from spacy.tokens import Doc
 
@@ -34,91 +36,136 @@ class EntityPropertyParser:
     """
     Use spacy models to identifies named entities and attempt to link tokens to entities in wikidata
     """
-    def __init__(self, property_extended_label_filepath: str, model_type: str = 'trf'):
+    def __init__(self,
+                 entity_exact_label_filepath: str,
+                 property_extended_label_filepath: str,
+                 model_type: str = 'trf'):
         self.nlp = spacy.load(spacy_model_types[model_type])
         # Add entity linker models
         self.nlp.add_pipe('entityLinker')
         self.nlp.add_pipe('entityfishing')
-        self.prop_matcher = self._create_property_phrase_matcher(property_extended_label_filepath)
+        self.ent_matcher = self._create_property_or_ent_phrase_matcher(entity_exact_label_filepath)
+        self.prop_matcher = self._create_property_or_ent_phrase_matcher(property_extended_label_filepath)
 
     def __call__(self, doc: str):
         return self.nlp(doc)
 
-    def _create_property_phrase_matcher(self, property_extended_label_filepath: str):
-        prop_labels_dict = json.load(open(property_extended_label_filepath, 'r'))
-        prop_matcher = PhraseMatcher(self.nlp.vocab)
+    def _create_property_or_ent_phrase_matcher(self, property_or_ent_label_filepath: str):
+        labels_dict = json.load(open(property_or_ent_label_filepath, 'r'))
+        matcher = PhraseMatcher(self.nlp.vocab)
 
         # Add a pattern for each property id of interest in our KG
-        for prop_id, possible_labels_list in prop_labels_dict.items():
-            prop_matcher.add(prop_id, [self.nlp.make_doc(text) for text in possible_labels_list])
+        for wk_data_id, possible_labels in labels_dict.items():
+            if isinstance(possible_labels, list):
+                matcher.add(wk_data_id, [self.nlp.make_doc(text) for text in possible_labels])
+            elif isinstance(possible_labels, str):
+                matcher.add(wk_data_id, [self.nlp.make_doc(possible_labels)])
 
-        return prop_matcher
+        return matcher
 
-    def return_wikidata_entities(
+    def return_wikidata_entities_w_entity_linkers(
             self,
             doc: str,
             entities_of_interest: Tuple[str, ...] = None):
 
         proc_doc = self.nlp(doc)
+
+        # Exact string match in the sentence
+        wkdata_ents_v1 = [(self.nlp.vocab.strings[match_id], len(proc_doc[start: end].text))
+                          for match_id, start, end in self.ent_matcher(proc_doc)]
+
+        # The longer length wikidata entity is kept, as some names might contain others: The movie Fire vs Fire of Love
+        if len(wkdata_ents_v1) > 0:
+            # Make a single element list of the matched entity with the highest length
+            max_len_wkdata_ents_v1 = max([wkdata_ent[1] for wkdata_ent in wkdata_ents_v1])
+            wkdata_ents_v1 = [wkdata_ents_v1[np.argmax([wkdata_ent[1] for wkdata_ent in wkdata_ents_v1])]][0]
+        else:
+            max_len_wkdata_ents_v1 = 0
+
+        # Extract using the pretrained entity linkers
         wkdata_ents_1 = _get_wikidata_entities_from_entity_linker(proc_doc)
         wkdata_ents_2 = _get_wikidata_entities_from_entity_fishing(proc_doc)
 
-        wkdata_ents = merge_dicts(wkdata_ents_1, wkdata_ents_2)
+
+        wkdata_ents_v2_dict = merge_dicts(wkdata_ents_1, wkdata_ents_2)
+        spacy_ents = [ent for ent in proc_doc.ents]
 
         if entities_of_interest:
-            return proc_doc, [ent for ent in proc_doc.ents if ent.label_ in entities_of_interest], \
-                   {k: v for k, v in wkdata_ents.items() if v['ner_type'] in entities_of_interest}
+            spacy_ents = [ent for ent in spacy_ents if ent.label_ in entities_of_interest]
+            wkdata_ents_v2_dict = {k: v for k, v in wkdata_ents_v2_dict.items()
+                                   if v['ner_type'] in entities_of_interest}
+
+        if len(wkdata_ents_v2_dict.keys()) > 0:
+            wkdata_ents_v2 = list(wkdata_ents_v2_dict.keys())
+            max_len_wkdata_ents_v2 = max([len(v['text']) for v in wkdata_ents_v2_dict.values()])
         else:
-            return proc_doc, [ent for ent in proc_doc.ents], wkdata_ents
+            wkdata_ents_v2 = []
+            max_len_wkdata_ents_v2 = 0
+
+        # Rule of thumb (hack!): Return the list that has the relevant wikidata entity with the longer string length
+        if max_len_wkdata_ents_v2 > max_len_wkdata_ents_v1:
+            return spacy_ents, wkdata_ents_v2
+        elif max_len_wkdata_ents_v2 < max_len_wkdata_ents_v1:
+            return spacy_ents, wkdata_ents_v1
+        else:
+            return spacy_ents, []
 
     def return_wikidata_properties(self, doc: str) -> list:
         return [self.nlp.vocab.strings[match_id] for match_id, _, _ in self.prop_matcher(self.nlp(doc))]
 
+    def return_wikidata_entities_exact_match(self, doc: str) -> list:
+        return [self.nlp.vocab.strings[match_id] for match_id, _, _ in self.ent_matcher(self.nlp(doc))]
+
 
 if __name__ == "__main__":
     entityPaser = EntityPropertyParser(
-        property_extended_label_filepath='../../../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json', model_type='trf')
-    doc, ents, wkdata_ents = entityPaser.return_wikidata_entities("I want to see a picture of Julia Roberts nd Keanu Reaves in the city of Pitalito and Bordones")
+        entity_exact_label_filepath='./entity_prop_parser/wk_data_names_ents_of_interest.json',
+        property_extended_label_filepath='./entity_prop_parser/wk_data_names_props_of_interest_2.json',
+        model_type='trf')
+
+    prompt = "I want to see a picture of Julia Roberts nd Keanu Reaves in the city of Pitalito and Bordones"
+    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(prompt)
+    print(prompt)
     print(ents)
     print(wkdata_ents)
 
-    doc, ents, wkdata_ents = entityPaser.return_wikidata_entities(
+    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
         "I want to see a picture of Julia Roberts nd Keanu Reaves in the city of Pitalito and Bordones",
         entities_of_interest=('PERSON',))
 
     print(ents)
     print(wkdata_ents)
 
-    doc, ents, wkdata_ents = entityPaser.return_wikidata_entities("I want to see a poster of the movie The Post and a picture of Julia Roberts",
-                                                                  entities_of_interest=('PERSON', 'WORK_OF_ART'))
+    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers("I want to see a poster of the movie The Post and a picture of Julia Roberts",
+                                                                                   entities_of_interest=('PERSON', 'WORK_OF_ART'))
     print(ents)
     print(wkdata_ents)
 
-    doc, ents, wkdata_ents = entityPaser.return_wikidata_entities(
+    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
         "I want to see a picture of Michael Jordan",
         entities_of_interest=('PERSON', 'WORK_OF_ART'))
     print(ents)
     print(wkdata_ents)
 
-    doc, ents, wkdata_ents = entityPaser.return_wikidata_entities(
+    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
         "I I I I dont know, ",
         entities_of_interest=('PERSON', 'WORK_OF_ART'))
     print(ents)
     print(wkdata_ents)
 
-    doc, ents, wkdata_ents = entityPaser.return_wikidata_entities(
+    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
         "Show me a picture of Harry Potter and the Philosopher's Stone",
         entities_of_interest=('PERSON', 'WORK_OF_ART'))
     print(ents)
     print(wkdata_ents)
 
-    doc, ents, wkdata_ents = entityPaser.return_wikidata_entities(
+    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
         "Show me a the poster of Pirates of the caribbean",
         entities_of_interest=('PERSON', 'WORK_OF_ART'))
     print(ents)
     print(wkdata_ents)
 
-    doc, ents, wkdata_ents = entityPaser.return_wikidata_entities(
+    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
         "Who is the lead actor of Pirates of the caribbean",
         entities_of_interest=('PERSON', 'WORK_OF_ART'))
     print(ents)
@@ -126,15 +173,13 @@ if __name__ == "__main__":
     print(len(wkdata_ents))
 
     # Test property matching with phrase matcher
-    prop_label_dict = json.load(open('../../../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json', 'r'))
-
     input_str = "Who is the director of the matrix"
     entity_detected = entityPaser.return_wikidata_properties(input_str)
-    print(input_str, entity_detected, prop_label_dict[entity_detected[0]])
+    print(input_str, entity_detected)
 
     input_str = "Who is the lead actor of Pirates of the caribbean"
     entity_detected = entityPaser.return_wikidata_properties(input_str)
-    print(input_str, entity_detected, prop_label_dict[entity_detected[0]])
+    print(input_str, entity_detected)
 
     input_str = "Who was the mom of Charlie in Two and a half Men"
     entity_detected = entityPaser.return_wikidata_properties(input_str)
