@@ -113,6 +113,28 @@ WHERE {{
 LIMIT 1
 """
 
+person_or_film_lowercase_label_match_V2 = """
+prefix wdt: <http://www.wikidata.org/prop/direct/>
+prefix wd: <http://www.wikidata.org/entity/>
+SELECT DISTINCT ?item ?label 
+WHERE {{
+        ?item rdfs:label ?label .
+        ?item wdt:P31 ?prop_instace_of .
+        {{
+            FILTER (?prop_instace_of in (wd:Q11424, wd:Q24862, wd:Q5, wd:Q506240, wd:Q336144, wd:Q20650540, wd:Q759853, wd:Q110900120, wd:Q29168811, wd:Q17517379))
+        }}
+        UNION
+        {{
+            ?prop_instace_of wdt:P279 ?prop_subclass_of .
+            FILTER (?prop_subclass_of in (wd:Q11424, wd:Q202866, wd:Q2431196, wd:Q29168811, wd:Q17517379, wd:Q110900120))
+        }}
+        FILTER (LCASE(STR(?label)) = '{}')
+        FILTER(LANG(?label) = "en")
+}}
+LIMIT 1
+"""
+
+
 """
 Match properties by label
 #########################

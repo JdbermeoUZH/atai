@@ -71,16 +71,8 @@ class EntityPropertyParser:
         proc_doc = self.nlp(doc)
 
         # Exact string match in the sentence
-        wkdata_ents_v1 = [(self.nlp.vocab.strings[match_id], len(proc_doc[start: end].text))
+        wkdata_ents_v1 = [(self.nlp.vocab.strings[match_id], proc_doc[start: end].text)
                           for match_id, start, end in self.ent_matcher(proc_doc)]
-
-        # The longer length wikidata entity is kept, as some names might contain others: The movie Fire vs Fire of Love
-        if len(wkdata_ents_v1) > 0:
-            # Make a single element list of the matched entity with the highest length
-            max_len_wkdata_ents_v1 = max([wkdata_ent[1] for wkdata_ent in wkdata_ents_v1])
-            wkdata_ents_v1 = [wkdata_ents_v1[np.argmax([wkdata_ent[1] for wkdata_ent in wkdata_ents_v1])]][0]
-        else:
-            max_len_wkdata_ents_v1 = 0
 
         # Extract using the pretrained entity linkers
         wkdata_ents_1 = _get_wikidata_entities_from_entity_linker(proc_doc)
@@ -95,20 +87,23 @@ class EntityPropertyParser:
             wkdata_ents_v2_dict = {k: v for k, v in wkdata_ents_v2_dict.items()
                                    if v['ner_type'] in entities_of_interest}
 
-        if len(wkdata_ents_v2_dict.keys()) > 0:
-            wkdata_ents_v2 = list(wkdata_ents_v2_dict.keys())
-            max_len_wkdata_ents_v2 = max([len(v['text']) for v in wkdata_ents_v2_dict.values()])
-        else:
-            wkdata_ents_v2 = []
-            max_len_wkdata_ents_v2 = 0
+        wkdata_ents_v2 = [(k, v['text']) for k, v in wkdata_ents_v2_dict.items()]
 
-        # Rule of thumb (hack!): Return the list that has the relevant wikidata entity with the longer string length
-        if max_len_wkdata_ents_v2 > max_len_wkdata_ents_v1:
-            return spacy_ents, wkdata_ents_v2
-        elif max_len_wkdata_ents_v2 < max_len_wkdata_ents_v1:
-            return spacy_ents, wkdata_ents_v1
-        else:
-            return spacy_ents, []
+        # Merge both entity candidates
+        wkdata_ents = wkdata_ents_v1 + wkdata_ents_v2
+
+        # Remove entities whose text is contained in the others
+        wkdata_ents = [
+            (wkdata_ent_id, wkdata_ent_text) for wkdata_ent_id, wkdata_ent_text in wkdata_ents
+            if not any(
+                [wkdata_ent_text in wkdata_ent_text_ for _, wkdata_ent_text_ in wkdata_ents if wkdata_ent_text_ != wkdata_ent_text]
+            )
+        ]
+
+        # Remove duplicate entity ids
+        wkdata_ents = list(set([wkdata_ent_id for wkdata_ent_id, _ in wkdata_ents]))
+
+        return spacy_ents, wkdata_ents
 
     def return_wikidata_properties(self, doc: str) -> list:
         return [self.nlp.vocab.strings[match_id] for match_id, _, _ in self.prop_matcher(self.nlp(doc))]
@@ -123,65 +118,24 @@ if __name__ == "__main__":
         property_extended_label_filepath='./entity_prop_parser/wk_data_names_props_of_interest_2.json',
         model_type='trf')
 
-    prompt = "I want to see a picture of Julia Roberts nd Keanu Reaves in the city of Pitalito and Bordones"
-    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(prompt)
-    print(prompt)
-    print(ents)
-    print(wkdata_ents)
+    prompt_list = [
+        ("What is the box office of Princess and the Frog??", None),
+        ("I want to see a picture of Julia Roberts nd Keanu Reaves in the city of Pitalito and Bordones", None),
+        ("I want to see a picture of Julia Roberts nd Keanu Reaves in the city of Pitalito and Bordones", ('PERSON',)),
+        ("I want to see a poster of the movie The Post and a picture of Julia Roberts", ('PERSON', 'WORK_OF_ART')),
+        ("I want to see a picture of Michael Jordan", ('PERSON', 'WORK_OF_ART')),
+        ("I I I I dont know, ", ('PERSON', 'WORK_OF_ART')),
+        ("Show me a picture of Harry Potter and the Philosopher's Stone", ('PERSON', 'WORK_OF_ART')),
+        ("Who is the lead actor of Pirates of the caribbean", ('PERSON', 'WORK_OF_ART')),
+        ("Who is the lead actor of Pirates of the caribbean", None),
+        ("Who is the director of the matrix", ('PERSON', 'WORK_OF_ART')),
+        ("Who was the mom of Charlie in Two and a half Men", None),
+        ]
 
-    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
-        "I want to see a picture of Julia Roberts nd Keanu Reaves in the city of Pitalito and Bordones",
-        entities_of_interest=('PERSON',))
-
-    print(ents)
-    print(wkdata_ents)
-
-    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers("I want to see a poster of the movie The Post and a picture of Julia Roberts",
-                                                                                   entities_of_interest=('PERSON', 'WORK_OF_ART'))
-    print(ents)
-    print(wkdata_ents)
-
-    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
-        "I want to see a picture of Michael Jordan",
-        entities_of_interest=('PERSON', 'WORK_OF_ART'))
-    print(ents)
-    print(wkdata_ents)
-
-    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
-        "I I I I dont know, ",
-        entities_of_interest=('PERSON', 'WORK_OF_ART'))
-    print(ents)
-    print(wkdata_ents)
-
-    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
-        "Show me a picture of Harry Potter and the Philosopher's Stone",
-        entities_of_interest=('PERSON', 'WORK_OF_ART'))
-    print(ents)
-    print(wkdata_ents)
-
-    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
-        "Show me a the poster of Pirates of the caribbean",
-        entities_of_interest=('PERSON', 'WORK_OF_ART'))
-    print(ents)
-    print(wkdata_ents)
-
-    ents, wkdata_ents = entityPaser.return_wikidata_entities_w_entity_linkers(
-        "Who is the lead actor of Pirates of the caribbean",
-        entities_of_interest=('PERSON', 'WORK_OF_ART'))
-    print(ents)
-    print(wkdata_ents)
-    print(len(wkdata_ents))
-
-    # Test property matching with phrase matcher
-    input_str = "Who is the director of the matrix"
-    entity_detected = entityPaser.return_wikidata_properties(input_str)
-    print(input_str, entity_detected)
-
-    input_str = "Who is the lead actor of Pirates of the caribbean"
-    entity_detected = entityPaser.return_wikidata_properties(input_str)
-    print(input_str, entity_detected)
-
-    input_str = "Who was the mom of Charlie in Two and a half Men"
-    entity_detected = entityPaser.return_wikidata_properties(input_str)
-    print(input_str, entity_detected)
+    for prompt_text, entities_of_interst in prompt_list:
+        ents, wkdata_ents_ = entityPaser.return_wikidata_entities_w_entity_linkers(
+            prompt_text, entities_of_interest=entities_of_interst)
+        print(f'prompt_text: {prompt_text}')
+        print(f'spacy ents: {ents}')
+        print(f'wkdata_ents: {wkdata_ents_}')
 

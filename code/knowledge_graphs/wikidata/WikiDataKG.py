@@ -48,7 +48,7 @@ class WikiDataKG(BasicKG):
 
     def check_in_entity_movie_or_person(self, wk_ent_id: str) -> bool:
         relevant_instace_of_ents = ('Q11424', 'Q5', 'Q24862', 'Q506240', 'Q336144',
-                                    'Q20650540', 'Q759853', 'Q110900120')
+                                    'Q20650540', 'Q759853', 'Q110900120', 'Q29168811', 'Q17517379')
         return any([(self.namespaces.WD[wk_ent_id], self.namespaces.WDT.P31, self.namespaces.WD[obj]) in self.kg
                     for obj in relevant_instace_of_ents])
 
@@ -92,7 +92,7 @@ class WikiDataKG(BasicKG):
             query = wikidata_queries.person_exact_lowercase_label_match
 
         elif ent_type == 'person or movie':
-            query = wikidata_queries.person_or_film_lowercase_label_match
+            query = wikidata_queries.person_or_film_lowercase_label_match_V2
 
         query_result = self.kg.query(query.format(entity_string_to_match))
 

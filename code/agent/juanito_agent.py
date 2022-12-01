@@ -190,7 +190,7 @@ class JuanitoBot(DemoBot):
 
             if not answered:
                 # TODO: Check if property is in crowdsoruce dataset, otherwise, answer IDK or funnel to
-                print("Try to answer with crowd source or conversational model")
+                print("Try to answer with conversational model or say I Don't know!")
 
         # If there is a single object, we can query the objects label and answer the question directly
         elif len(answers) == 1:
@@ -217,15 +217,6 @@ class JuanitoBot(DemoBot):
                 room_id=room_id, session_token=self.session_token,
                 message=self._sample_template_answer('fact_question_multiple_answers').format(
                     property=property_label, subject=entity_label, objects=answer_labels))
-
-            # Tell the user the search will take a bit longer
-            self.post_message(room_id=room_id, session_token=self.session_token,
-                              message=self._sample_template_answer('transition_to_crowdsourced_answer'))
-
-            # If more than one answer is found, answer it with crowd-sourced data
-            self._respond_kg_question_using_crowd_kg(
-                room_id=room_id, entity_id=wk_ent_id, entity_label=entity_label,
-                property_id=wk_prop_id, property_label=property_label)
 
     def _respond_kg_question_using_embeddings(
             self, room_id: str, entity_id: str, entity_label: str,
@@ -376,8 +367,9 @@ if __name__ == '__main__':
 
     # password = getpass.getpass('Password of the demo bot:')
     # bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
-    bot._respond_kg_question("What is the box office of Princess and the Frog??", "room_id")
-    bot._respond_kg_question("Who is the lead actor in Harry Potter and The Goblet of Fire?", "room_id")
+    # bot._respond_kg_question("What is the box office of Princess and the Frog??", "room_id")
+    # bot._respond_kg_question("Who is the lead actor in Harry Potter and The Goblet of Fire?", "room_id")
+    bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "roomid")
 
     bot.first_funnel_filter("Recommend movies like Nightmare on Elm Street, Friday the 13th and Halloween")
 
