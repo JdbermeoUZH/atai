@@ -247,8 +247,8 @@ class JuanitoBot(DemoBot):
 
         # Try to get imdb_id of PERSON entities successfully linked to wikidata
         imdb_ids = []
-        if len(list(wkdata_ents.keys())) > 0:
-            for wk_ent_id in wkdata_ents.keys():
+        if len(wkdata_ents) > 0:
+            for wk_ent_id in wkdata_ents:
                 imdb_id = self.wkdata_kg.get_imdb_id(wk_ent_id=wk_ent_id)
                 if imdb_id:
                     # add imdb_id to the list
@@ -298,7 +298,7 @@ class JuanitoBot(DemoBot):
         # Use entity linker to find named entities of interest and their respective wikidata ids
         spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
             message, entities_of_interest=("WORK_OF_ART", ))
-        movie_wk_ent_id += list(wkdata_ents.keys())
+        movie_wk_ent_id += wkdata_ents
 
         # If no wikidata ent related to movies is detected, try to match the detected named entities to movies
         if len(movie_wk_ent_id) < 2:
@@ -366,12 +366,11 @@ if __name__ == '__main__':
     bot = JuanitoBot(username_, password_)
 
     # password = getpass.getpass('Password of the demo bot:')
-    # bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
+    #bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
+    #bot._respond_with_recommendation("Recommend movies similar to Hamlet and Othello ", "roomid")
     # bot._respond_kg_question("What is the box office of Princess and the Frog??", "room_id")
     # bot._respond_kg_question("Who is the lead actor in Harry Potter and The Goblet of Fire?", "room_id")
-    bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "roomid")
-
-    bot.first_funnel_filter("Recommend movies like Nightmare on Elm Street, Friday the 13th and Halloween")
+    # bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "roomid")
 
     reconnection_listening_attempts = 0
 
