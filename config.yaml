@@ -31,5 +31,5 @@ conversation_config:
       recommendations:
         rec_rules_filepath: './knowledge_graphs/wikidata//recommendation/rec_rules.json'
 
-    crowd_sourcing:
-      kg_filepath: '../setup_data/14_graph.tsv'
+  crowd_sourcing:
+    filepath: 'crowd_sourcing/crowd_sourced_tuples.json'

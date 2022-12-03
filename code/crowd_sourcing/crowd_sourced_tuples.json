@@ -1,0 +1,370 @@
+{
+    "Q11621": {
+        "P2142": {
+            "object": "792910554",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q603545": {
+        "P2142": {
+            "object": "4300000",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q16911843": {
+        "P577": {
+            "object": "2014-01-18",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q1628022": {
+        "P577": {
+            "object": "1951-01-01",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q171300": {
+        "P2142": {
+            "object": "267000000",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q1339195": {
+        "indirectSubclassOf": {
+            "object": "Q27096213",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q104649845": {
+        "indirectSubclassOf": {
+            "object": "Q43229",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q61928601": {
+        "indirectSubclassOf": {
+            "object": "Q95074",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q8275050": {
+        "indirectSubclassOf": {
+            "object": "Q47461344",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q17710986": {
+        "indirectSubclassOf": {
+            "object": "Q7725310",
+            "inter_rater_agreement": 0.2363636363636367,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q321561": {
+        "P577": {
+            "object": "1982-01-01",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q15055043": {
+        "P2142": {
+            "object": "511200000",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q23999890": {
+        "P577": {
+            "object": "2015-01-05",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q841233": {
+        "P2142": {
+            "object": "10696220",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q19803136": {
+        "P577": {
+            "object": "2015-06-27",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q326914": {
+        "P136": {
+            "object": "Q8261",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q814781": {
+        ".P344": {
+            "object": "Q40087803",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q2576243": {
+        "P364": {
+            "object": "Q1860",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q4335275": {
+        "P520": {
+            "object": "Q52382294",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q931557": {
+        "P750": {
+            "object": "Q80948336",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q2235250": {
+        "P161": {
+            "object": "Q599673",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q696646": {
+        "P3174": {
+            "object": "Q1315917",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q6782400": {
+        "P945": {
+            "object": "Q17",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q6538": {
+        "P119": {
+            "object": "Q1792",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q9192": {
+        "P276": {
+            "object": "Q833",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q10623856": {
+        "P20": {
+            "object": "Q2096",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q223596": {
+        "P1431": {
+            "object": "Q457180",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q1893555": {
+        "P272": {
+            "object": "Q48784114",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q21060270": {
+        "P27": {
+            "object": "Q916",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q1288004": {
+        "P1412": {
+            "object": "Q13330",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q1168152": {
+        "P161": {
+            "object": "Q105825",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q908556": {
+        "P161": {
+            "object": "Q17386547",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q1471671": {
+        "P495": {
+            "object": "Q30",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q1722254": {
+        "P750": {
+            "object": "Q907311",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q409022": {
+        "P161": {
+            "object": "Q3087184",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q6548158": {
+        "P106": {
+            "object": "Q33999",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q1123629": {
+        "P161": {
+            "object": "Q211040",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q1720855": {
+        "P577": {
+            "object": "2010-01-01",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q598752": {
+        "P577": {
+            "object": "2011-01-01",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q427386": {
+        "P2142": {
+            "object": "176997168",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q20001199": {
+        "P2142": {
+            "object": "863756051",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q639070": {
+        "P161": {
+            "object": "Q5423258",
+            "inter_rater_agreement": 0.03999999999999986,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q1780602": {
+        "P344": {
+            "object": "Q295093",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    },
+    "Q610633": {
+        "P58": {
+            "object": "Q1700810",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q2188914": {
+        "P161": {
+            "object": "Q17350908",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 3,
+            "reject_votes": 0
+        }
+    },
+    "Q1032889": {
+        "P58": {
+            "object": "Q3194791",
+            "inter_rater_agreement": 0.1991101223581758,
+            "support_votes": 2,
+            "reject_votes": 1
+        }
+    }
+}
