@@ -11,11 +11,11 @@
     "so the {property} of {subject} might be the following: {objects}",
     "the {property} of {subject} are: {objects}"
   ],
-  "transition_to_crowdsourced_answer": [
-    "However let me verify if these answers are correct by going over multiple reports...",
-    "But let me check with another source of information",
-    "but let me double check that",
-    "I'll check other sources though"
+  "crowdsourced_answer": [
+    "Actually I have verified information on this",
+    "as it happens, a group of people double checked this",
+    "this was validated via crowd sourcing, their answer was the following:",
+    "Oh, I know that from a crowd sourced dataset"
   ],
   "error_fact_question": [
     "Sorry, I do not fully get the question. Could you please rephrase it?",
@@ -61,5 +61,9 @@
     "Oh, let me check",
     "Oh that's a hard one",
     "Sorry, this will take me a bit longer to look up"
+  ],
+
+  "answer_not_known": [
+    "Apologies, I couldn't figure this one out. perhaps you could try googling  "
   ]
 }

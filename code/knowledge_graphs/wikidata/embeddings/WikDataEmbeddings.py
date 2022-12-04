@@ -88,10 +88,11 @@ class WikiDataEmbeddings:
     def _calculate_centroid(self, wk_ent_id_list: list) -> np.ndarray:
         centroid_emb = None
         for i, wk_ent_id_i in enumerate(wk_ent_id_list):
-            if i == 0:
-                centroid_emb = self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id_i]]]
-            else:
-                centroid_emb += self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id_i]]]
+            if self.namespaces.WD[wk_ent_id_i] in self.ent2id.keys():
+                if i == 0:
+                    centroid_emb = self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id_i]]]
+                else:
+                    centroid_emb += self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id_i]]]
 
         return centroid_emb/len(wk_ent_id_list)
 

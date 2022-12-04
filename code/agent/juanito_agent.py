@@ -6,6 +6,7 @@ import random
 from knowledge_graphs.wikidata.WikiDataKG import WikiDataKG
 from models.entity_prop_parser.EntityPropertyParser import EntityPropertyParser
 from models.intent_classifier.InteractionTypeClassifier import InteractionTypeClassifier
+from models.RedirectionAgent import RedirectionAgent
 from demo_agent import DemoBot
 from regex_matchers.MediaQRegexMatcher import MediaQRegexMatcher
 from regex_matchers.FactQRegexMatcher import FactQRegexMatcher
@@ -16,6 +17,7 @@ from utils.utils import get_args_config_file
 config_args = get_args_config_file(os.path.join('..', 'config.yaml'))
 conversation_params = config_args['conversation_config']
 wk_kg_params = conversation_params['knowledge_graphs']['wikidata']
+crowd_sourcing_params = conversation_params['crowd_sourcing']
 first_funnel_config = conversation_params['first_funnel_info']
 
 url = config_args['chatroom_server']['url']  # url of the speakeasy server
@@ -27,6 +29,9 @@ class JuanitoBot(DemoBot):
         super().__init__(username, password)
         self.first_funnel_filter = InteractionTypeClassifier(
             train_examples_path=first_funnel_config['classifier_train_data'])
+
+        self.redirection_agent = RedirectionAgent()
+
         self.entityParser = EntityPropertyParser(
             entity_exact_label_filepath=conversation_params['entity_parser']['match_ent_labels_filepath'],
             property_extended_label_filepath=conversation_params['entity_parser']['match_prop_labels_filepath'],
@@ -50,6 +55,7 @@ class JuanitoBot(DemoBot):
         self._media_q_regex_matcher = MediaQRegexMatcher()
         self._fact_q_regex_matcher = FactQRegexMatcher()
         self._rec_q_regex_matcher = RecQRegexMatcher()
+        self._crowd_source_dict = json.load(open(crowd_sourcing_params['filepath'], 'r'))
         print('Ready to go!')
 
     def listen(self):
@@ -107,8 +113,8 @@ class JuanitoBot(DemoBot):
             time.sleep(listen_freq)
 
     def _respond_with_conversation(self, message: str, room_id: str):
-        print("Use conversational model")
-        return "Use conversational model"
+        self.post_message(room_id=room_id, session_token=self.session_token,
+                          message=self.redirection_agent.small_talk_and_redirect_conversation(message))
 
     def _respond_kg_question(self, message: str, room_id: str):
         wk_ent_id = None
@@ -130,7 +136,7 @@ class JuanitoBot(DemoBot):
             for ent in spacy_ents:
                 # Try to match a wk_ent id
                 wkdata_ents.append(
-                    self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text, ent_type='person'))
+                    self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text, ent_type='person or movie'))
 
         # Filter matched entities so far
         wkdata_ents = [wkdata_ent for wkdata_ent in wkdata_ents if
@@ -159,11 +165,23 @@ class JuanitoBot(DemoBot):
                 wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(entity_str, ent_type='person or movie')
 
         # If still no property was found with the regex and we have multiple from the PhraseMatcher,
-        #   then pick one at random
+        #  then pick one at random
         if wk_prop_id is None and len(wk_prop_ids) > 1:
             wk_prop_id = random.choice(wk_prop_ids)
 
         if wk_ent_id and wk_prop_id:
+            entity_label = self.wkdata_kg.get_entity_label(wk_ent_id)
+            property_label = self.wkdata_kg.get_property_label(wk_prop_id)
+
+            # Try to answer with croud_sourcing data
+            answered = self._using_crowd_sourced_data(
+                room_id=room_id, entity_id=wk_ent_id, entity_label=entity_label,
+                property_id=wk_prop_id, property_label=property_label)
+
+            # If the answer is in the crowdsourced dataset, answer with this
+            if answered:
+                return
+
             # Get the object of the relation (wk_ent_id, wk_prop_id, object)
             answers = [os.path.basename(str(tuple_)) for tuple_ in self.wkdata_kg.kg.objects(
                 self.wkdata_kg.namespaces.WD[wk_ent_id], self.wkdata_kg.namespaces.WDT[wk_prop_id])]
@@ -175,9 +193,6 @@ class JuanitoBot(DemoBot):
             return
 
         # Report answer back
-        entity_label = self.wkdata_kg.get_entity_label(wk_ent_id)
-        property_label = self.wkdata_kg.get_property_label(wk_prop_id)
-
         # If the entity and property were identified but there is no object for it, answer it with embeddings
         if len(answers) == 0:
             # Tell the user the search will take a bit longer
@@ -189,7 +204,7 @@ class JuanitoBot(DemoBot):
                 property_id=wk_prop_id, property_label=property_label)
 
             if not answered:
-                # TODO: Check if property is in crowdsoruce dataset, otherwise, answer IDK or funnel to
+                # TODO: answer IDK or funnel to conversational model
                 print("Try to answer with conversational model or say I Don't know!")
 
         # If there is a single object, we can query the objects label and answer the question directly
@@ -208,7 +223,7 @@ class JuanitoBot(DemoBot):
                 room_id=room_id, session_token=self.session_token,
                 message=full_answer_str.encode('utf-8'))
 
-        # If more than one entity is part of the answer, report it and double check on the crowdsourced dataset
+        # If more than one entity is part of the answer, report it
         elif len(answers) > 1:
             answer_labels = ', '.join([self.wkdata_kg.get_entity_label(answer) for answer in answers])
 
@@ -234,11 +249,37 @@ class JuanitoBot(DemoBot):
         else:
             return False
 
-    def _respond_kg_question_using_crowd_kg(self, room_id: str, entity_id: str, entity_label: str,
-                                            property_id: str, property_label: str):
-        response = "Use crowd kg"
-        print(response)
-        return response
+    def _using_crowd_sourced_data(self, room_id: str, entity_id: str, entity_label: str,
+                                  property_id: str, property_label: str) -> bool:
+        # Check if the tuple (entity_id, property_id) are in the crowdsourced data
+        if entity_id in self._crowd_source_dict.keys():
+            if property_id in self._crowd_source_dict[entity_id].keys():
+                answer_dict = self._crowd_source_dict[entity_id][property_id]
+
+                # Give the answer to the user
+                object_ = answer_dict['object']
+                fleiss_kappa = answer_dict['inter_rater_agreement']
+                n_support = answer_dict['support_votes']
+                n_reject = answer_dict['reject_votes']
+
+                if object_.startswith('Q'):
+                    # Get the label of the object
+                    object_ = self.wkdata_kg.get_entity_label(object_)
+
+                transition_to_crowdsource = self._sample_template_answer('crowdsourced_answer')
+                answer = f'The {property_label} of {entity_label} is {object_} - according to the crowd, ' \
+                         f'who had an inter-rater agreement of {fleiss_kappa} in this batch. ' \
+                         f'The answer distribution for this specific task was {n_support} support votes ' \
+                         f'and {n_reject} reject votes.'
+
+                self.post_message(room_id=room_id, session_token=self.session_token,
+                                  message=transition_to_crowdsource)
+                self.post_message(room_id=room_id, session_token=self.session_token,
+                                  message=answer)
+
+                return True
+
+        return False
 
     def _respond_media_request(self, message: str, room_id: str):
         # Use entity linker to find named entities of interest and their respective wikidata ids
@@ -370,7 +411,8 @@ if __name__ == '__main__':
     #bot._respond_with_recommendation("Recommend movies similar to Hamlet and Othello ", "roomid")
     # bot._respond_kg_question("What is the box office of Princess and the Frog??", "room_id")
     # bot._respond_kg_question("Who is the lead actor in Harry Potter and The Goblet of Fire?", "room_id")
-    # bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "roomid")
+    bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "roomid")
+    bot._respond_with_recommendation("Given that I like The Lion King, Pocahontas, and The Beauty and the Beast, can you recommend some movies?", "room_id")
 
     reconnection_listening_attempts = 0
 
