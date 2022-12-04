@@ -7,7 +7,7 @@ from knowledge_graphs.wikidata.WikiDataKG import WikiDataKG
 from models.entity_prop_parser.EntityPropertyParser import EntityPropertyParser
 from models.intent_classifier.InteractionTypeClassifier import InteractionTypeClassifier
 from models.RedirectionAgent import RedirectionAgent
-from demo_agent import DemoBot
+from agent.demo_agent import DemoBot
 from regex_matchers.MediaQRegexMatcher import MediaQRegexMatcher
 from regex_matchers.FactQRegexMatcher import FactQRegexMatcher
 from regex_matchers.RecQRegexMatcher import RecQRegexMatcher
