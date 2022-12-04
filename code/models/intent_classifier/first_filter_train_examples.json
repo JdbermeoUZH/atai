@@ -14,7 +14,13 @@
         "Tell me a story",
         "I am tired",
         "Do you have plans for the weekend?",
-        "hey I have a question about movies"
+        "hey I have a question about movies",
+        "in gada da vida baby",
+        "I work as a Data Scientist",
+        "asfjskldajlkdsjf",
+        "alfheuwqotyus",
+        "aaaaaa",
+        "abbbbaaa"
     ],
     "Factual Question/Embedding/Crowdsourcing": [
         "Who is the director of The Matrix",
@@ -74,7 +80,8 @@
         "who is the costume designer of LOTR?",
         "Who is the production designer of LOTR",
         "Answer me who is the director of StarWars",
-        "Show me who is the main actress in No Country for Old Men"
+        "Show me who is the main actress in No Country for Old Men",
+        "Can you tell me the publication date of Tom Meets Zizou?"
     ],
     "Media Question": [
         "Show me a picture of Halle Berry",

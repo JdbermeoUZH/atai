@@ -46,14 +46,19 @@ class WikiDataKG(BasicKG):
     def check_if_property_in_kg(self, wk_prop_id: str) -> bool:
         return str(self.namespaces.WDT[wk_prop_id]) in self.property_labels_dict.keys()
 
-    def check_in_entity_movie_or_person(self, wk_ent_id: str) -> bool:
-        relevant_instace_of_ents = ('Q11424', 'Q5', 'Q24862', 'Q506240', 'Q336144',
+    def check_if_entity_is_person(self, wk_ent_id: str) -> bool:
+        relevant_instace_of_ents = ('Q5',)
+        return any([(self.namespaces.WD[wk_ent_id], self.namespaces.WDT.P31, self.namespaces.WD[obj]) in self.kg
+                    for obj in relevant_instace_of_ents])
+
+    def check_if_entity_is_movie(self, wk_ent_id: str) -> bool:
+        relevant_instace_of_ents = ('Q11424', 'Q24862', 'Q506240', 'Q336144',
                                     'Q20650540', 'Q759853', 'Q110900120', 'Q29168811', 'Q17517379')
         return any([(self.namespaces.WD[wk_ent_id], self.namespaces.WDT.P31, self.namespaces.WD[obj]) in self.kg
                     for obj in relevant_instace_of_ents])
 
-    def check_in_entity_is_movie(self, wk_ent_id: str) -> bool:
-        relevant_instace_of_ents = ('Q11424', 'Q24862', 'Q506240', 'Q336144',
+    def check_if_entity_movie_or_person(self, wk_ent_id: str) -> bool:
+        relevant_instace_of_ents = ('Q11424', 'Q5', 'Q24862', 'Q506240', 'Q336144',
                                     'Q20650540', 'Q759853', 'Q110900120', 'Q29168811', 'Q17517379')
         return any([(self.namespaces.WD[wk_ent_id], self.namespaces.WDT.P31, self.namespaces.WD[obj]) in self.kg
                     for obj in relevant_instace_of_ents])
@@ -86,32 +91,33 @@ class WikiDataKG(BasicKG):
     def get_wkdata_entid_based_on_label_match(self, entity_string_to_match: str, ent_type: Optional[str] = None) \
             -> Optional[str]:
         wk_ent_id = None
-        query = None
-        query_result = []
-        entity_string_to_match = entity_string_to_match.lower()
+        entity_string_to_match = entity_string_to_match.lower().strip('?')
+        query = wikidata_queries.exact_lowercase_label_match
+        filter_fn = lambda x: True
 
         # First try exact lower case match with SPARQL
         if ent_type is None:
             query = wikidata_queries.exact_lowercase_label_match
 
+        # All the other queries are terribly slow
         elif ent_type == 'person':
-            query = wikidata_queries.person_exact_lowercase_label_match
-
-        elif ent_type == 'person or movie':
-            query = wikidata_queries.person_or_film_lowercase_label_match_V2
+            #query = wikidata_queries.person_exact_lowercase_label_match
+            filter_fn = self.check_if_entity_is_person
 
         elif ent_type == 'movie':
-            query = wikidata_queries.film_lowercase_label_match
+            #query = wikidata_queries.film_lowercase_label_match
+            filter_fn = self.check_if_entity_is_movie
+
+        elif ent_type == 'person or movie':
+            #query = wikidata_queries.person_or_film_lowercase_label_match_V2
+            filter_fn = self.check_if_entity_movie_or_person
 
         query_result = self.kg.query(query.format(entity_string_to_match))
 
-        # If search failed, i.e: no items in the queries result, try cleaning the string
-        if len([str(wk_ent_id) for wk_ent_id, _ in query_result]) == 0:
-            entity_string_to_match = entity_string_to_match.strip('?')
-            query_result = self.kg.query(
-                query.format(entity_string_to_match))
-
         detected_wk_entities = [str(wk_ent_id) for wk_ent_id, _ in query_result]
+        
+        # Filter entities depending on the type of entity we want
+        detected_wk_entities = [wkdata_ent for wkdata_ent in detected_wk_entities if filter_fn(wkdata_ent)]
 
         if len(detected_wk_entities) == 1:
             wk_ent_id = os.path.basename(detected_wk_entities[0])
@@ -121,7 +127,8 @@ class WikiDataKG(BasicKG):
             matches = np.array(
                 [(os.path.basename(wk_id), fuzz.token_sort_ratio(entity_string_to_match, label))
                  for wk_id, label in self.entity_labels_dict.items()
-                 if fuzz.token_sort_ratio(entity_string_to_match, label) > 75]
+                 if fuzz.token_sort_ratio(entity_string_to_match, label) > 75 and
+                 filter_fn(os.path.basename(wk_id))]
             )
 
             if matches.shape[0] > 0:

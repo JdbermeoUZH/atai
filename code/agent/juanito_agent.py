@@ -116,11 +116,11 @@ class JuanitoBot(DemoBot):
         movie_wk_ent_id_list = []
         # Use entity linker to find named entities of interest and their respective wikidata ids
         spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
-            message, entities_of_interest=("WORK_OF_ART",), entity_filter=self.wkdata_kg.check_in_entity_is_movie)
+            message, entities_of_interest=("WORK_OF_ART",), entity_filter=self.wkdata_kg.check_if_entity_is_movie)
 
         # Filter matched entities so far
         wkdata_ents = [wkdata_ent for wkdata_ent in wkdata_ents if
-                       self.wkdata_kg.check_in_entity_is_movie(wkdata_ent)]
+                       self.wkdata_kg.check_if_entity_is_movie(wkdata_ent)]
 
         movie_wk_ent_id_list += wkdata_ents
 
@@ -161,18 +161,18 @@ class JuanitoBot(DemoBot):
         # Use spacy entity linkers to identify entities
         spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
             doc=message, entities_of_interest=("PERSON", "WORK_OF_ART"),
-            entity_filter=self.wkdata_kg.check_in_entity_movie_or_person)
+            entity_filter=self.wkdata_kg.check_if_entity_movie_or_person)
 
         # If no entities were detected, then try to identify them via named entities detected
         if len(wkdata_ents) == 0 and len(spacy_ents) > 0:
             for ent in spacy_ents:
                 # Try to match a wk_ent id
                 wkdata_ents.append(
-                    self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text, ent_type='person or movie'))
+                    self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text))
 
         # Filter matched entities so far
         wkdata_ents = [wkdata_ent for wkdata_ent in wkdata_ents if
-                       self.wkdata_kg.check_in_entity_movie_or_person(wkdata_ent)]
+                       self.wkdata_kg.check_if_entity_movie_or_person(wkdata_ent)]
 
         if len(wkdata_ents) == 1:
             wk_ent_id = wkdata_ents[0]
@@ -440,14 +440,6 @@ if __name__ == '__main__':
     password_ = 'V2f80g-vpxEh7w'
     bot = JuanitoBot(username_, password_)
 
-    # password = getpass.getpass('Password of the demo bot:')
-    #bot._respond_media_request("Show me a picture of Julia Roberts", 'roomid')
-    #bot._respond_with_recommendation("Recommend movies similar to Hamlet and Othello ", "roomid")
-    # bot._respond_kg_question("What is the box office of Princess and the Frog??", "room_id")
-    # bot._respond_kg_question("Who is the lead actor in Harry Potter and The Goblet of Fire?", "room_id")
-    #bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "roomid")
-    #bot._respond_with_recommendation("Given that I like The Lion King, Pocahontas, and The Beauty and the Beast, can you recommend some movies?", "room_id")
-
     reconnection_listening_attempts = 0
 
     try:
@@ -455,7 +447,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(e)
         reconnection_listening_attempts += 1
-        if reconnection_listening_attempts > 3:
+        if reconnection_listening_attempts > 5:
             raise e
         bot.connect(username_, password_)
         bot.listen()
