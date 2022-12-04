@@ -58,17 +58,19 @@ class WikiDataEmbeddings:
         else:
             return None
 
+    def get_most_similar_entities_to_centroid(self, wk_ent_id_list: list, top_k: int = 10) -> Optional[np.ndarray]:
+        closest_entities = None
 
-    def get_most_similar_entities_to_centroid(self, wk_ent_id_list: list, top_k: int = 10):
         # Get embedding for centroid
         centroid = self._calculate_centroid(wk_ent_id_list)
 
-        # Get the entities most similar to the centroid
-        _, closest_entities = self._return_most_similar_entites(centroid, top_k=top_k + len(wk_ent_id_list))
+        if centroid is not None:
+            # Get the entities most similar to the centroid
+            _, closest_entities = self._return_most_similar_entites(centroid, top_k=top_k + len(wk_ent_id_list))
 
-        # Remove the entities that compose the cnentroid
-        closest_entities = [entity for entity in closest_entities if entity not in wk_ent_id_list]
-        closest_entities = closest_entities[: top_k]
+            # Remove the entities that compose the cnentroid
+            closest_entities = [entity for entity in closest_entities if entity not in wk_ent_id_list]
+            closest_entities = closest_entities[: top_k]
 
         return closest_entities
 
@@ -85,16 +87,22 @@ class WikiDataEmbeddings:
             [os.path.basename(str(self.id2ent[object_emb_id])) for object_emb_id in most_likely[0: top_k]])
         return dist_top_k_entities, id_top_k_closest_entities
 
-    def _calculate_centroid(self, wk_ent_id_list: list) -> np.ndarray:
+    def _calculate_centroid(self, wk_ent_id_list: list) -> Optional[np.ndarray]:
         centroid_emb = None
-        for i, wk_ent_id_i in enumerate(wk_ent_id_list):
-            if self.namespaces.WD[wk_ent_id_i] in self.ent2id.keys():
+        # Filter out entities for which we do not have an embedding
+        wk_ent_id_list = [wk_ent_id for wk_ent_id in wk_ent_id_list if
+                          self.namespaces.WD[wk_ent_id] in self.ent2id.keys()]
+
+        if len(wk_ent_id_list) > 0:
+            for i, wk_ent_id_i in enumerate(wk_ent_id_list):
                 if i == 0:
                     centroid_emb = self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id_i]]]
                 else:
                     centroid_emb += self.entity_emb[self.ent2id[self.namespaces.WD[wk_ent_id_i]]]
 
-        return centroid_emb/len(wk_ent_id_list)
+            return centroid_emb/len(wk_ent_id_list)
+
+        return centroid_emb
 
 
 if __name__ == '__main__':

@@ -29,5 +29,15 @@
   "about {rec_list}"],
   "inspired by": ["that are inspired by {rec_list}", "inspired by {rec_list}", "about {rec_list}"],
   "after a work by": ["were made after {rec_list}", "after a work by {rec_list}",
-    "were made after a work by {rec_list}"]
+    "were made after a work by {rec_list}"],
+  "movies_not_found": ["I am sorry, I did not really get the movie titles you are referring to. Could you perhaps write their title more precisely?",
+    "Aplogies, could you perhaps write the movie titles you are referring to more precisely?",
+    "I am sorry, I do not really understand the names of the movies you refer to",
+    "I am sorry, I do not really understand the names of the movies you refer to, could you write perhaps their exact titles?"
+  ],
+  "no_recommendation_of_criteria_or_movies": [
+    "I know which movies you are referring to, but based on them I cannot really think of a common criteria or specific movies to recommned to you",
+    "hmm I know which movies you are talking about, but it is hard for me to come up with some common criteria to recommend somthing. I can also not think of similar movies to recommend",
+    "alight, so I know the movies you referred to, but I don't think there is much of a common criteria between them to recommend something"
+  ]
 }

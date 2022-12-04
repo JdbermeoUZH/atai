@@ -66,7 +66,9 @@ class EntityPropertyParser:
     def return_wikidata_entities_w_entity_linkers(
             self,
             doc: str,
-            entities_of_interest: Tuple[str, ...] = None):
+            entities_of_interest: Tuple[str, ...] = None,
+            entity_filter: callable = None
+    ):
 
         proc_doc = self.nlp(doc)
 
@@ -92,11 +94,17 @@ class EntityPropertyParser:
         # Merge both entity candidates
         wkdata_ents = wkdata_ents_v1 + wkdata_ents_v2
 
+        # Filter entities based on a given filter (i.e: they refer to movies, people, etc.)
+        if entity_filter:
+            wkdata_ents = [(wkdata_ent_id, wkdata_ent_label) for wkdata_ent_id, wkdata_ent_label in wkdata_ents
+                           if entity_filter(wkdata_ent_id)]
+
         # Remove entities whose text is contained in the others
         wkdata_ents = [
             (wkdata_ent_id, wkdata_ent_text) for wkdata_ent_id, wkdata_ent_text in wkdata_ents
             if not any(
-                [wkdata_ent_text in wkdata_ent_text_ for _, wkdata_ent_text_ in wkdata_ents if wkdata_ent_text_ != wkdata_ent_text]
+                [wkdata_ent_text in wkdata_ent_text_ for _, wkdata_ent_text_ in wkdata_ents if
+                 wkdata_ent_text_ != wkdata_ent_text]
             )
         ]
 

@@ -17,6 +17,12 @@
     "this was validated via crowd sourcing, their answer was the following:",
     "Oh, I know that from a crowd sourced dataset"
   ],
+  "error_dont_know_answer": [
+    "I am sorry, I understood the question about the {property} of {subject}, but I do not know the answer",
+    "Apologies, I thought about the {property} of {subject}, and I really do not know the answer",
+    "I am sorry, I do not know the answer to that question.\n But feel free to try with another question, I do know some stuff about movies",
+    "For this specific question (the {property} of {subject}), I do not know the answer"
+  ],
   "error_fact_question": [
     "Sorry, I do not fully get the question. Could you please rephrase it?",
     "Sorry, I did not fully understand the question. Could you phrase in a more direct form?",

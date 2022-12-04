@@ -112,6 +112,37 @@ class JuanitoBot(DemoBot):
 
             time.sleep(listen_freq)
 
+    def _find_wikidata_entity_id_of_movies_in_string(self, message: str) -> list[str]:
+        movie_wk_ent_id_list = []
+        # Use entity linker to find named entities of interest and their respective wikidata ids
+        spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
+            message, entities_of_interest=("WORK_OF_ART",), entity_filter=self.wkdata_kg.check_in_entity_is_movie)
+
+        # Filter matched entities so far
+        wkdata_ents = [wkdata_ent for wkdata_ent in wkdata_ents if
+                       self.wkdata_kg.check_in_entity_is_movie(wkdata_ent)]
+
+        movie_wk_ent_id_list += wkdata_ents
+
+        # If no wikidata ent related to movies is detected, try to match the detected named entities to movies
+        if len(movie_wk_ent_id_list) < 2:
+            for ent in spacy_ents:
+                # Try to match a wk_ent id
+                movie_wk_ent_id_list.append(
+                    self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text, ent_type='movie'))
+
+        if len(movie_wk_ent_id_list) < 2:
+            # Try to find entities that match movie titles extracted with regex
+            movie_list = self._rec_q_regex_matcher.match_string(message)
+            movie_wk_ent_id_list = [self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str, ent_type='movie')
+                               for extracted_str in movie_list]
+            movie_wk_ent_id_list = [wkdata_ent for wkdata_ent in movie_wk_ent_id_list if wkdata_ent is not None]
+
+        # Remove duplicates from the list
+        movie_wk_ent_id_list = list(set(movie_wk_ent_id_list))
+
+        return movie_wk_ent_id_list
+
     def _respond_with_conversation(self, message: str, room_id: str):
         self.post_message(room_id=room_id, session_token=self.session_token,
                           message=self.redirection_agent.small_talk_and_redirect_conversation(message))
@@ -122,17 +153,18 @@ class JuanitoBot(DemoBot):
 
         # Use phrasematcher on entire string to detect properties
         wk_prop_ids = self.entityParser.return_wikidata_properties(doc=message)
+
         # Only assign the entity if only one property is matched, otherwise it is too noisy
         if len(wk_prop_ids) == 1:
             wk_prop_id = wk_prop_ids[0]
 
         # Use spacy entity linkers to identify entities
         spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
-            doc=message, entities_of_interest=("PERSON", "WORK_OF_ART"))
+            doc=message, entities_of_interest=("PERSON", "WORK_OF_ART"),
+            entity_filter=self.wkdata_kg.check_in_entity_movie_or_person)
 
         # If no entities were detected, then try to identify them via named entities detected
         if len(wkdata_ents) == 0 and len(spacy_ents) > 0:
-            wkdata_ents = []
             for ent in spacy_ents:
                 # Try to match a wk_ent id
                 wkdata_ents.append(
@@ -145,6 +177,8 @@ class JuanitoBot(DemoBot):
         if len(wkdata_ents) == 1:
             wk_ent_id = wkdata_ents[0]
 
+        # These are supposed to be simple questions. If more than one entity is mentioned, prompt the user
+        #  to phrase an easier question
         elif len(wkdata_ents) > 1:
             self.post_message(room_id=room_id, session_token=self.session_token,
                               message=self._sample_template_answer('error_too_many_questions_fact_question'))
@@ -165,34 +199,37 @@ class JuanitoBot(DemoBot):
                 wk_ent_id = self.wkdata_kg.get_wkdata_entid_based_on_label_match(entity_str, ent_type='person or movie')
 
         # If still no property was found with the regex and we have multiple from the PhraseMatcher,
-        #  then pick one at random
+        #  then pick one at random from the PhraseMatcher
         if wk_prop_id is None and len(wk_prop_ids) > 1:
             wk_prop_id = random.choice(wk_prop_ids)
 
+        #################################################################################
+        # By this point we should have found a property and an entity
+        ################################################################################
         if wk_ent_id and wk_prop_id:
             entity_label = self.wkdata_kg.get_entity_label(wk_ent_id)
             property_label = self.wkdata_kg.get_property_label(wk_prop_id)
 
-            # Try to answer with croud_sourcing data
-            answered = self._using_crowd_sourced_data(
-                room_id=room_id, entity_id=wk_ent_id, entity_label=entity_label,
-                property_id=wk_prop_id, property_label=property_label)
-
-            # If the answer is in the crowdsourced dataset, answer with this
-            if answered:
-                return
-
-            # Get the object of the relation (wk_ent_id, wk_prop_id, object)
-            answers = [os.path.basename(str(tuple_)) for tuple_ in self.wkdata_kg.kg.objects(
-                self.wkdata_kg.namespaces.WD[wk_ent_id], self.wkdata_kg.namespaces.WDT[wk_prop_id])]
-
         else:
-            # If it fails, ask for rephrasing of the question
+            # If not, we need to te the user we cannot answer the question and ask them to rephrase it
             self.post_message(room_id=room_id, session_token=self.session_token,
                               message=self._sample_template_answer('error_fact_question'))
             return
 
-        # Report answer back
+        # Try to answer with croud_sourcing data
+        answered = self._using_crowd_sourced_data(
+            room_id=room_id, entity_id=wk_ent_id, entity_label=entity_label,
+            property_id=wk_prop_id, property_label=property_label)
+
+        # If the question was answered with the crowdsourced dataset, stop
+        if answered:
+            return
+
+        # If not answered with the dataset, retrieve answer from KG.
+        # Get the object of the relation (wk_ent_id, wk_prop_id, object)
+        answers = [os.path.basename(str(tuple_)) for tuple_ in self.wkdata_kg.kg.objects(
+            self.wkdata_kg.namespaces.WD[wk_ent_id], self.wkdata_kg.namespaces.WDT[wk_prop_id])]
+
         # If the entity and property were identified but there is no object for it, answer it with embeddings
         if len(answers) == 0:
             # Tell the user the search will take a bit longer
@@ -204,8 +241,12 @@ class JuanitoBot(DemoBot):
                 property_id=wk_prop_id, property_label=property_label)
 
             if not answered:
-                # TODO: answer IDK or funnel to conversational model
-                print("Try to answer with conversational model or say I Don't know!")
+                # Tell the user we do not know the answer
+                self.post_message(
+                    room_id=room_id, session_token=self.session_token,
+                    message=self._sample_template_answer('error_dont_know_answer').format(
+                        property=property_label, subject=entity_label)
+                )
 
         # If there is a single object, we can query the objects label and answer the question directly
         elif len(answers) == 1:
@@ -335,63 +376,56 @@ class JuanitoBot(DemoBot):
                 self.post_message(room_id=room_id, session_token=self.session_token, message=f'image:{movienet_id}')
 
     def _respond_with_recommendation(self, message: str, room_id: str):
-        movie_wk_ent_id = []
-        # Use entity linker to find named entities of interest and their respective wikidata ids
-        spacy_ents, wkdata_ents = self.entityParser.return_wikidata_entities_w_entity_linkers(
-            message, entities_of_interest=("WORK_OF_ART", ))
-        movie_wk_ent_id += wkdata_ents
+        movie_wk_ent_id = self._find_wikidata_entity_id_of_movies_in_string(message)
 
-        # If no wikidata ent related to movies is detected, try to match the detected named entities to movies
-        if len(movie_wk_ent_id) < 2:
-            for ent in spacy_ents:
-                # Try to match a wk_ent id
-                movie_wk_ent_id.append(self.wkdata_kg.get_wkdata_entid_based_on_label_match(ent.text))
+        if len(movie_wk_ent_id) == 0:
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message=random.choice(self._template_rec_answer['movies_not_found']))
+            return
 
-        if len(movie_wk_ent_id) < 2:
-            # Try to find entities that match movie titles extracted with regex
-            movie_list = self._rec_q_regex_matcher.match_string(message)
-            movie_wk_ent_id = [self.wkdata_kg.get_wkdata_entid_based_on_label_match(extracted_str)
-                               for extracted_str in movie_list]
-            movie_wk_ent_id = [wkdata_ent for wkdata_ent in movie_wk_ent_id if wkdata_ent is not None]
-
-            if len(movie_wk_ent_id) == 0:
-                print("send Q to conversational agent")
-                return
-
+        # Finding common criteria via queries takes some time, so notify the user of the wait
         self.post_message(room_id=room_id, session_token=self.session_token,
                           message=random.choice(self._template_rec_answer['longer_wait']))
 
-        movie_wk_ent_id = list(set(movie_wk_ent_id))
         recs, movies_to_recommend = self.wkdata_kg.recommend_similar_movies_and_characateristics(movie_wk_ent_id)
 
-        if recs == {}:
-            print("send Q to conversational agent, as no recommendation criteria was met")
+        # If there is nothing to recommend, even though the films were identified, tell that to the user
+        if recs == {} and len(movies_to_recommend) == 0:
+            self.post_message(room_id=room_id, session_token=self.session_token,
+                              message=random.choice(self._template_rec_answer['no_recommendation_of_criteria_or_movies']))
             return
 
-        sentence_start = random.choice(self._template_rec_answer['sentence_start'])
-        sentence_subject = random.choice(self._template_rec_answer['subject'])
+        # If we reach this point, we have something to recommend to the user. Format the strings and post them
+        movie_recommendation_str = ''
+        criteria_recommendations_str = ''
 
-        criteria_recommendations = []
-        for criteria, things_to_recommend in recs.items():
-            rec_list = ', or '.join(things_to_recommend)
-            criteria_recommendation = random.choice(
-                self._template_rec_answer[criteria]).format(rec_list=rec_list)
-            criteria_recommendations.append(criteria_recommendation)
+        if len(movies_to_recommend) > 0:
+            # Sample randomly the number of movies to recommend to have more variation during the interaction
+            movies_to_recommend = movies_to_recommend[0:random.randint(2, len(movies_to_recommend))]
+            movie_recommendation_template = random.choice(self._template_rec_answer['complement'])
+            movie_recommendation_str = movie_recommendation_template.format(
+                movie_list=', '.join(movies_to_recommend[:-1]) + f', and {movies_to_recommend[-1]}'
+            )
 
-        criteria_recommendations = '; '.join(criteria_recommendations) if len(criteria_recommendations) > 1 else \
-            criteria_recommendations[0]
+        if recs != {}:
+            sentence_start = random.choice(self._template_rec_answer['sentence_start'])
+            sentence_subject = random.choice(self._template_rec_answer['subject'])
+            criteria_recommendations = []
+            for criteria, things_to_recommend in recs.items():
+                rec_list = ', or '.join(things_to_recommend)
+                criteria_recommendation = random.choice(
+                    self._template_rec_answer[criteria]).format(rec_list=rec_list)
+                criteria_recommendations.append(criteria_recommendation)
 
-        # Sample randomly the number of movies to recommend to have more variation during the interaction
-        movies_to_recommend = movies_to_recommend[0:random.randint(2, len(movies_to_recommend))]
-        movie_recommendation_template = random.choice(self._template_rec_answer['complement'])
-        movie_recommendation = movie_recommendation_template.format(
-            movie_list=', '.join(movies_to_recommend[:-1]) + f', and {movies_to_recommend[-1]}'
-        )
+            criteria_recommendations = '; '.join(criteria_recommendations) if len(criteria_recommendations) > 1 else \
+                criteria_recommendations[0]
 
-        recomendation_str = f"{sentence_start} {sentence_subject} {criteria_recommendations}. {movie_recommendation}"
+            criteria_recommendations_str = f"{sentence_start} {sentence_subject} {criteria_recommendations}. "
+
+        recommendation_str = criteria_recommendations_str + movie_recommendation_str
 
         self.post_message(
-            room_id=room_id, session_token=self.session_token, message=recomendation_str.encode('utf-8')
+            room_id=room_id, session_token=self.session_token, message=recommendation_str.encode('utf-8')
         )
 
     def _sample_template_answer(self, interaction_type: str) -> str:
@@ -411,8 +445,8 @@ if __name__ == '__main__':
     #bot._respond_with_recommendation("Recommend movies similar to Hamlet and Othello ", "roomid")
     # bot._respond_kg_question("What is the box office of Princess and the Frog??", "room_id")
     # bot._respond_kg_question("Who is the lead actor in Harry Potter and The Goblet of Fire?", "room_id")
-    bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "roomid")
-    bot._respond_with_recommendation("Given that I like The Lion King, Pocahontas, and The Beauty and the Beast, can you recommend some movies?", "room_id")
+    #bot._respond_kg_question("What is the MPAA film rating of Weathering with you?", "roomid")
+    #bot._respond_with_recommendation("Given that I like The Lion King, Pocahontas, and The Beauty and the Beast, can you recommend some movies?", "room_id")
 
     reconnection_listening_attempts = 0
 

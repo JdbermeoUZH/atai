@@ -52,6 +52,12 @@ class WikiDataKG(BasicKG):
         return any([(self.namespaces.WD[wk_ent_id], self.namespaces.WDT.P31, self.namespaces.WD[obj]) in self.kg
                     for obj in relevant_instace_of_ents])
 
+    def check_in_entity_is_movie(self, wk_ent_id: str) -> bool:
+        relevant_instace_of_ents = ('Q11424', 'Q24862', 'Q506240', 'Q336144',
+                                    'Q20650540', 'Q759853', 'Q110900120', 'Q29168811', 'Q17517379')
+        return any([(self.namespaces.WD[wk_ent_id], self.namespaces.WDT.P31, self.namespaces.WD[obj]) in self.kg
+                    for obj in relevant_instace_of_ents])
+
     def get_object_or_objects(self, wk_ent_id: str, wk_prop_id: str) -> list:
         return [obj for obj in self.kg.objects(self.namespaces.WD.wk_ent_id, self.namespaces.WDT.wk_prop_id)]
 
@@ -93,6 +99,9 @@ class WikiDataKG(BasicKG):
 
         elif ent_type == 'person or movie':
             query = wikidata_queries.person_or_film_lowercase_label_match_V2
+
+        elif ent_type == 'movie':
+            query = wikidata_queries.film_lowercase_label_match
 
         query_result = self.kg.query(query.format(entity_string_to_match))
 
@@ -162,6 +171,9 @@ class WikiDataKG(BasicKG):
         # Get the list of the closest_movies
         closest_ents = self.kg_embeddings.get_most_similar_entities_to_centroid(wk_ent_id_list, top_k)
 
+        if closest_ents is None:
+            return {}, []
+
         # Check for common property values accross all the closest movies
         one_hop_recs = self._evaluate_recomendation_rule(
             closest_ents,
@@ -211,6 +223,7 @@ class WikiDataKG(BasicKG):
         # Then remove names that overlap with names of the input
         ref_movie_str = set([(self.entity_labels_dict[str(self.namespaces.WD[wk_ent_id])]).lower()
                              for wk_ent_id in wk_ent_id_list])
+
         closest_movies_str_list = [closest_movie for closest_movie in closest_movies_str_set if closest_movie.lower() not in ref_movie_str]
         closest_movies_str_list = closest_movies_str_list[0: min(num_movies_to_report, len(closest_movies_str_list))]
 
