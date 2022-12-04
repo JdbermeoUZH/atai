@@ -309,7 +309,7 @@ class JuanitoBot(DemoBot):
 
                 transition_to_crowdsource = self._sample_template_answer('crowdsourced_answer')
                 answer = f'The {property_label} of {entity_label} is {object_} - according to the crowd, ' \
-                         f'who had an inter-rater agreement of {fleiss_kappa} in this batch. ' \
+                         f'who had an inter-rater agreement of {fleiss_kappa: 0.3f} in this batch. ' \
                          f'The answer distribution for this specific task was {n_support} support votes ' \
                          f'and {n_reject} reject votes.'
 
