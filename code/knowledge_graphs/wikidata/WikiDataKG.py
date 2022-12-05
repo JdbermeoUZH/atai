@@ -92,47 +92,28 @@ class WikiDataKG(BasicKG):
             -> Optional[str]:
         wk_ent_id = None
         entity_string_to_match = entity_string_to_match.lower().strip('?')
-        query = wikidata_queries.exact_lowercase_label_match
         filter_fn = lambda x: True
 
-        # First try exact lower case match with SPARQL
-        if ent_type is None:
-            query = wikidata_queries.exact_lowercase_label_match
-
-        # All the other queries are terribly slow
-        elif ent_type == 'person':
-            #query = wikidata_queries.person_exact_lowercase_label_match
+        # Choose the type of filter to use
+        if ent_type == 'person':
             filter_fn = self.check_if_entity_is_person
 
         elif ent_type == 'movie':
-            #query = wikidata_queries.film_lowercase_label_match
             filter_fn = self.check_if_entity_is_movie
 
         elif ent_type == 'person or movie':
-            #query = wikidata_queries.person_or_film_lowercase_label_match_V2
             filter_fn = self.check_if_entity_movie_or_person
 
-        query_result = self.kg.query(query.format(entity_string_to_match))
+        # Try matching the entity based on the edit distance
+        matches = np.array(
+            [(os.path.basename(wk_id), fuzz.token_sort_ratio(entity_string_to_match, label))
+             for wk_id, label in self.entity_labels_dict.items()
+             if fuzz.token_sort_ratio(entity_string_to_match, label) > 75 and
+             filter_fn(os.path.basename(wk_id))]
+        )
 
-        detected_wk_entities = [str(wk_ent_id) for wk_ent_id, _ in query_result]
-        
-        # Filter entities depending on the type of entity we want
-        detected_wk_entities = [wkdata_ent for wkdata_ent in detected_wk_entities if filter_fn(wkdata_ent)]
-
-        if len(detected_wk_entities) == 1:
-            wk_ent_id = os.path.basename(detected_wk_entities[0])
-
-        else:
-            # Try matching the entity based on the edit distance
-            matches = np.array(
-                [(os.path.basename(wk_id), fuzz.token_sort_ratio(entity_string_to_match, label))
-                 for wk_id, label in self.entity_labels_dict.items()
-                 if fuzz.token_sort_ratio(entity_string_to_match, label) > 75 and
-                 filter_fn(os.path.basename(wk_id))]
-            )
-
-            if matches.shape[0] > 0:
-                wk_ent_id = matches[matches[:, 1].astype(float).argmax(), 0]
+        if matches.shape[0] > 0:
+            wk_ent_id = matches[matches[:, 1].astype(float).argmax(), 0]
 
         return wk_ent_id
 
@@ -259,16 +240,16 @@ class WikiDataKG(BasicKG):
 
 if __name__ == '__main__':
     kg = WikiDataKG(
-        kg_tuple_file_path='../setup_data/wikidata_kg/14_graph.nt',
-        imdb2movienet_filepath='../setup_data/wikidata_kg/id_mappings/imdb2movienet.json',
-        entity_label_filepath='../setup_data/wikidata_kg/id_labels/wkdata_entity_labels_dict.json',
-        property_label_filepath='../setup_data/wikidata_kg/id_labels/wkdata_property_labels_dict.json',
-        property_extended_label_filepath='../setup_data/wikidata_kg/id_labels/wk_data_names_props_of_interest.json',
-        entity_emb_filepath='../setup_data/wikidata_kg/embeddings/entity_embeds.npy',
-        entity_id_mapping='../setup_data/wikidata_kg/embeddings/entity_ids.del',
-        relation_emb='../setup_data/wikidata_kg/embeddings/relation_embeds.npy',
-        relation_id_mapping='../setup_data/wikidata_kg/embeddings/relation_ids.del',
-        recomendation_rules_filepath='../setup_data/wikidata_kg/recommendation/rec_rules.json'
+        kg_tuple_file_path='../../setup_data/wikidata_kg/14_graph.nt',
+        imdb2movienet_filepath='./id_mappings/imdb2movienet.json',
+        entity_label_filepath='./wkdata_entity_labels_dict.json',
+        property_label_filepath='./wkdata_property_labels_dict.json',
+        property_extended_label_filepath='../models/entity_prop_parser/wk_data_names_props_of_interest_2.json',
+        entity_emb_filepath='../../setup_data/wikidata_kg/embeddings/entity_embeds.npy',
+        entity_id_mapping='./embeddings/entity_ids.del',
+        relation_emb='../../setup_data/wikidata_kg/embeddings/relation_embeds.npy',
+        relation_id_mapping='./embeddings/relation_ids.del',
+        recomendation_rules_filepath='./recommendation/rec_rules.json'
     )
 
     assert kg.get_imdb_id(wk_ent_id='Q40523') == 'nm0000210'
