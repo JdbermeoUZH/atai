@@ -122,8 +122,8 @@ class EntityPropertyParser:
 
 if __name__ == "__main__":
     entityPaser = EntityPropertyParser(
-        entity_exact_label_filepath='./entity_prop_parser/wk_data_names_ents_of_interest.json',
-        property_extended_label_filepath='./entity_prop_parser/wk_data_names_props_of_interest_2.json',
+        entity_exact_label_filepath='wk_data_names_ents_of_interest_2.json',
+        property_extended_label_filepath='wk_data_names_props_of_interest_2.json',
         model_type='trf')
 
     prompt_list = [
