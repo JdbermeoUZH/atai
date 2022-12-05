@@ -14,10 +14,11 @@ class DemoBot:
         self.chat_state = None
         self.session_token = None
         self.agent_details = None
-        self.connect(username, password)
+        self.username = username
+        self.password = password
 
-    def connect(self, username, password):
-        self.agent_details = self.login(username, password)
+    def connect(self):
+        self.agent_details = self.login(self.username, self.password)
         self.session_token = self.agent_details['sessionToken']
         self.chat_state = defaultdict(lambda: {'messages': defaultdict(dict), 'initiated': False, 'my_alias': None})
 
@@ -81,9 +82,11 @@ class DemoBot:
 
 
 if __name__ == '__main__':
-    username = 'demo_bot'
-    password = getpass.getpass('Password of the demo bot:')
+    username = 'juandiego.bermeoortiz_bot'
+    password = 'V2f80g-vpxEh7w'
     demobot = DemoBot(username, password)
+    password = getpass.getpass('Connect the instance to the Speakeasy server: [press enter]')
+    demobot.connect()
     demobot.listen()
 
 

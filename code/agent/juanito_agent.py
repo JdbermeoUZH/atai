@@ -2,6 +2,7 @@ import os
 import time
 import json
 import random
+import getpass
 
 from knowledge_graphs.wikidata.WikiDataKG import WikiDataKG
 from models.entity_prop_parser.EntityPropertyParser import EntityPropertyParser
@@ -440,6 +441,8 @@ if __name__ == '__main__':
     password_ = 'V2f80g-vpxEh7w'
     bot = JuanitoBot(username_, password_)
 
+    password = getpass.getpass('Connect the instance to the Speakeasy server: [press enter]')
+    bot.connect()
     reconnection_listening_attempts = 0
 
     try:
@@ -449,6 +452,6 @@ if __name__ == '__main__':
         reconnection_listening_attempts += 1
         if reconnection_listening_attempts > 5:
             raise e
-        bot.connect(username_, password_)
+        bot.connect()
         bot.listen()
 
