@@ -17,7 +17,7 @@ conda update conda -y
 conda create --name ATAI_aws
 conda activate ATAI_aws
 
-# sIntall libraries
+# Install libraries
 conda install -c anaconda scikit-learn -y
 conda install -c conda-forge spacy -y
 python -m spacy download en_core_web_sm

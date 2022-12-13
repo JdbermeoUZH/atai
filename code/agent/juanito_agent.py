@@ -2,7 +2,6 @@ import os
 import time
 import json
 import random
-import getpass
 
 from knowledge_graphs.wikidata.WikiDataKG import WikiDataKG
 from models.entity_prop_parser.EntityPropertyParser import EntityPropertyParser
