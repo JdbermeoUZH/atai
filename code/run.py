@@ -17,7 +17,7 @@ listen_freq = conversation_params['listen_freq']
 
 
 if __name__ == '__main__':
-    username_ = 'juandiego.bermeoortiz_bot'
+    username_ = 'ardentHyena6_bot'
     password_ = 'V2f80g-vpxEh7w'
     bot = JuanitoBot(username_, password_)
 

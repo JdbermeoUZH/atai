@@ -5,7 +5,7 @@ import requests  # install the package via "pip install requests"
 from collections import defaultdict
 
 # url of the speakeasy server
-url = 'https://speakeasy.ifi.uzh.ch'
+url = 'https://server5.speakeasy-ai.org'
 listen_freq = 3
 
 
@@ -82,7 +82,7 @@ class DemoBot:
 
 
 if __name__ == '__main__':
-    username = 'juandiego.bermeoortiz_bot'
+    username = 'ardentHyena6_bot'
     password = 'V2f80g-vpxEh7w'
     demobot = DemoBot(username, password)
     password = getpass.getpass('Connect the instance to the Speakeasy server: [press enter]')
